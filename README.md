@@ -1,222 +1,328 @@
-# Clusterm
+# ClusterM - Kubernetes Deployment Manager TUI
 
-A comprehensive Terminal User Interface (TUI) for Kubernetes cluster management that bridges the gap between complex command-line operations and user-friendly interfaces.
+A robust, modular, and extensible Terminal User Interface (TUI) application for managing Kubernetes deployments. Built with Python and Textual, ClusterM provides an intuitive interface for cluster management, resource monitoring, and Helm chart deployments.
 
-### Overview
+## Features
 
-Clusterm transforms Kubernetes management into an intuitive, visual experience. Built for DevOps teams where technical and non-technical members need to collaborate on cluster operations, it provides a comprehensive dashboard for deployments, pods, services, and Helm releases across multiple clusters.
+### 🚀 Core Features
+- **Multi-Cluster Management**: Switch between multiple Kubernetes clusters seamlessly
+- **Resource Monitoring**: Real-time viewing of deployments, pods, services, and namespaces
+- **Helm Integration**: Deploy and manage Helm charts with interactive configuration
+- **Command Execution**: Execute kubectl and helm commands directly from the interface
+- **Log Viewing**: Access pod logs and command output in dedicated viewers
 
------
+### 🏗️ Architecture Features
+- **Modular Design**: Clean separation of concerns with dedicated modules
+- **Plugin System**: Extensible architecture for custom functionality
+- **Event-Driven**: Reactive updates through a central event bus
+- **Configuration Management**: Centralized, persistent configuration system
+- **Comprehensive Logging**: Structured logging with multiple output targets
+- **Testing Framework**: Built-in testing infrastructure with pytest
 
-### Key Features
+## Installation
 
-**Multi-Cluster Management**
+### Prerequisites
+- Python 3.11 or higher
+- kubectl binary
+- helm binary (optional, for Helm functionality)
 
-  * **Auto-discovery** of clusters from directory structure
-  * Seamless switching between **development, staging, and production** environments
-  * **Connection testing** and cluster health validation
-  * **Dynamic kubeconfig handling** per cluster
+### Install Dependencies
 
-**Comprehensive Resource Views**
-
-  * **Deployments:** Status, replicas, age, and namespace information
-  * **Pods:** Phase, readiness, restart counts, and node assignments
-  * **Services:** Types, IPs, ports, and load balancer status
-  * **Helm Releases:** Versions, revisions, and deployment history
-  * **Namespaces:** Status and resource organization
-
-**Interactive Operations**
-
-  * **Command Execution:** Run arbitrary `kubectl`/`helm` commands through the UI
-  * **Resource Description:** Detailed information about any selected resource
-  * **Log Viewing:** Real-time and historical log access
-  * **Helm Management:** Deploy, upgrade, rollback, and status checking
-  * **Namespace Switching:** Context-aware resource filtering
-
-**User-Friendly Interface**
-
-  * **Tabbed Layout:** Organized resource views
-  * **Keyboard Shortcuts:** Efficient navigation and operations
-  * **Real-time Updates:** Live status monitoring
-  * **Visual Status Indicators:** Clear health and state representation
-
------
-
-### Installation
-
-#### Prerequisites
-
-  * Python 3.8 or higher
-  * `kubectl` binary
-  * Helm 3.x (optional, for Helm operations)
-  * Access to Kubernetes cluster(s)
-
-#### Install Dependencies
-
+Using uv (recommended):
 ```bash
-pip install textual PyYAML
+uv sync
 ```
 
-#### Download and Setup
-
+Using pip:
 ```bash
-git clone https://github.com/pesnik/clusterm.git
-cd clusterm
-chmod +x clusterm.py
+pip install -r requirements.txt
 ```
 
------
+For development:
+```bash
+pip install -e .[dev]
+```
+
+## Project Structure
+
+```
+clusterm/
+├── src/
+│   ├── core/                 # Core infrastructure
+│   │   ├── config.py        # Configuration management
+│   │   ├── events.py        # Event system
+│   │   ├── exceptions.py    # Custom exceptions
+│   │   └── logger.py        # Logging infrastructure
+│   ├── k8s/                 # Kubernetes operations
+│   │   ├── manager.py       # Main K8s manager
+│   │   ├── cluster.py       # Cluster management
+│   │   ├── resources.py     # Resource operations
+│   │   └── commands.py      # Command execution
+│   ├── plugins/             # Plugin system
+│   │   ├── manager.py       # Plugin manager
+│   │   ├── base.py          # Plugin base classes
+│   │   └── builtin/         # Built-in plugins
+│   └── ui/                  # User interface
+│       ├── app.py           # Main application
+│       ├── screens.py       # Screen components
+│       └── components/      # Reusable UI components
+│           ├── tables.py    # Resource tables
+│           ├── panels.py    # UI panels
+│           └── modals.py    # Modal dialogs
+├── tests/                   # Test suite
+├── main.py                  # Application entry point
+└── pyproject.toml          # Project configuration
+```
+
+## Usage
+
+### Basic Usage
+
+Run ClusterM with default configuration:
+```bash
+python main.py
+```
+
+Run with custom configuration:
+```bash
+python main.py /path/to/config.yaml
+```
+
+### Keyboard Shortcuts
+
+- `q` - Quit application
+- `r` - Refresh all data
+- `c` - Switch cluster
+- `t` - Test cluster connection
+- `x` - Execute command
+- `d` - Deploy selected chart
+- `Ctrl+L` - Clear logs
 
 ### Directory Structure
 
-Clusterm expects the following directory structure:
+ClusterM expects the following directory structure for Kubernetes resources:
 
 ```
-/app/
-├── k8s/
-│   ├── clusters/
-│   │   ├── production/
-│   │   │   └── prod-kubeconfig.yaml
-│   │   ├── staging/
-│   │   │   └── staging-kubeconfig.yaml
-│   │   └── development/
-│   │       └── dev-kubeconfig.yaml
-│   ├── projects/
-│   │   └── helm-charts/
-│   │       ├── webapp/
-│   │       ├── api-service/
-│   │       └── monitoring/
-│   └── tools/
-│       ├── kubectl
-│       └── linux-amd64/
-│           └── helm
-└── clusterm.py
+/app/k8s/                    # Base K8s directory (configurable)
+├── clusters/                # Cluster configurations
+│   ├── cluster1/
+│   │   └── kubeconfig.yaml
+│   └── cluster2/
+│       └── config
+├── tools/                   # Binary tools
+│   ├── kubectl
+│   └── helm
+└── projects/
+    └── helm-charts/         # Helm charts
+        ├── app1/
+        │   ├── Chart.yaml
+        │   └── values.yaml
+        └── app2/
+            ├── Chart.yaml
+            └── values.yaml
 ```
 
------
+## Configuration
 
-### Usage
+ClusterM uses a YAML configuration file located at `~/.clusterm/config.yaml` by default.
 
-#### Starting Clusterm
+### Default Configuration
+
+```yaml
+app:
+  theme: dark
+  auto_refresh: true
+  refresh_interval: 30
+  log_level: INFO
+
+k8s:
+  base_path: /app
+  default_namespace: default
+  kubectl_timeout: 30
+  helm_timeout: 60
+
+ui:
+  show_timestamps: true
+  table_max_rows: 1000
+  log_max_lines: 5000
+
+plugins:
+  enabled: []
+  plugin_paths: []
+```
+
+### Customization
+
+You can customize ClusterM behavior by:
+
+1. **Configuration File**: Modify `~/.clusterm/config.yaml`
+2. **Environment Variables**: Override specific settings
+3. **Command Line Arguments**: Pass custom config path
+4. **Plugins**: Extend functionality with custom plugins
+
+## Plugin Development
+
+ClusterM supports custom plugins for extending functionality. Create a plugin by:
+
+1. Create a plugin directory: `~/.clusterm/plugins/my-plugin/`
+2. Add a `plugin.py` file with your plugin class:
+
+```python
+from src.plugins.base import BasePlugin, PluginMetadata
+
+class Plugin(BasePlugin):
+    @property
+    def metadata(self) -> PluginMetadata:
+        return PluginMetadata(
+            name="my-plugin",
+            version="1.0.0",
+            description="My custom plugin",
+            author="Your Name"
+        )
+    
+    def initialize(self) -> bool:
+        # Plugin initialization logic
+        return True
+    
+    def cleanup(self):
+        # Plugin cleanup logic
+        pass
+```
+
+3. Enable the plugin in your config:
+
+```yaml
+plugins:
+  enabled:
+    - my-plugin
+```
+
+## Development
+
+### Running Tests
 
 ```bash
-python clusterm.py
-# or specify a custom path
-python clusterm.py /path/to/your/k8s/directory
+pytest
 ```
 
-#### Keyboard Shortcuts
-
-  * `q` - Quit application
-  * `r` - Refresh all resource data
-  * `d` - Deploy selected Helm chart
-  * `l` - View logs for selected resource
-  * `c` - Switch between available clusters
-  * `t` - Test cluster connection
-  * `x` - Execute custom `kubectl`/`helm` command
-
-#### Basic Workflow
-
-1.  **Select Cluster:** Use `c` or click "Switch Cluster" to choose your target environment.
-2.  **Browse Resources:** Navigate through tabs to explore deployments, pods, services, etc.
-3.  **Select Resources:** Click on any resource to select it for operations.
-4.  **Execute Operations:** Use buttons or shortcuts to describe, view logs, or manage resources.
-5.  **Deploy Applications:** Select a Helm chart and press `d` for a guided deployment.
-6.  **Run Commands:** Press `x` to execute any `kubectl` or `helm` command through the UI.
-
------
-
-### Configuration
-
-#### Adding New Clusters
-
-1.  Create a directory in `k8s/clusters/[cluster-name]/`.
-2.  Place your kubeconfig file in that directory.
-3.  Restart Clusterm—it will auto-discover the new cluster.
-
-#### Adding Helm Charts
-
-1.  Place your Helm charts in `k8s/projects/helm-charts/[chart-name]/`.
-2.  Ensure each chart has a valid `Chart.yaml` and `values.yaml`.
-3.  Charts will appear automatically in the deployment interface.
-
-#### Command Execution
-
-The command execution feature (`x` key) allows running any `kubectl` or `helm` command:
-
-```
-# kubectl Examples
-get pods --all-namespaces
-describe deployment webapp
-logs -f pod-name
-scale deployment webapp --replicas=5
+Run tests with coverage:
+```bash
+pytest --cov=src
 ```
 
+### Code Quality
+
+Format code:
+```bash
+ruff format
 ```
-# Helm Examples
-list --all-namespaces
-status webapp-production
-history webapp-production
-rollback webapp-production 2
+
+Lint code:
+```bash
+ruff check
 ```
 
------
+Type checking:
+```bash
+mypy src
+```
 
-### Deployment Management
+### Development Setup
 
-Clusterm provides a guided deployment interface for Helm charts:
+1. Clone the repository
+2. Install dependencies: `uv sync`
+3. Install pre-commit hooks: `pre-commit install`
+4. Run tests: `pytest`
 
-1.  Select a chart from the left panel.
-2.  Press `d` or click "Deploy Selected".
-3.  Configure deployment parameters:
-      * **Namespace:** Target namespace (created if it doesn't exist)
-      * **Replicas:** Number of pod replicas
-      * **Environment:** `dev`/`staging`/`production`
-      * **Monitoring:** Enable/disable monitoring stack
-4.  Click "Deploy" to execute.
+## Architecture
 
------
+### Core Principles
 
-### Monitoring and Logs
+1. **Modularity**: Each component has a single responsibility
+2. **Extensibility**: Plugin system allows custom functionality
+3. **Reactive**: Event-driven architecture for real-time updates
+4. **Configuration**: Centralized, persistent configuration management
+5. **Testing**: Comprehensive test coverage with isolated components
 
-  * **Real-time Monitoring:** Resource status updates automatically with visual health indicators, age and uptime tracking, and replica counts.
-  * **Log Access:** View logs for pods, deployments, and other resources.
+### Component Interaction
 
------
+```
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│     UI      │    │    Core     │    │     K8s     │
+│  ┌───────┐  │    │ ┌─────────┐ │    │ ┌─────────┐ │
+│  │Screen │  │◄──►│ │EventBus │ │◄──►│ │Manager  │ │
+│  │       │  │    │ │         │ │    │ │         │ │
+│  └───────┘  │    │ │Config   │ │    │ │Cluster  │ │
+│  ┌───────┐  │    │ │         │ │    │ │         │ │
+│  │Modal  │  │    │ │Logger   │ │    │ │Commands │ │
+│  └───────┘  │    │ └─────────┘ │    │ └─────────┘ │
+└─────────────┘    └─────────────┘    └─────────────┘
+       ▲                   ▲                   ▲
+       │                   │                   │
+       └───────────────────┼───────────────────┘
+                           │
+                   ┌─────────────┐
+                   │   Plugins   │
+                   │ ┌─────────┐ │
+                   │ │Manager  │ │
+                   │ │         │ │
+                   │ │Plugin1  │ │
+                   │ │         │ │
+                   │ │Plugin2  │ │
+                   │ └─────────┘ │
+                   └─────────────┘
+```
 
-### Troubleshooting
+## Troubleshooting
 
-  * **`kubectl` not found:** Ensure the binary is executable (`chmod +x k8s/tools/kubectl`).
-  * **Helm binary not found:** Unzip the binary into the `k8s/tools/linux-amd64/` directory.
-  * **Cluster connection failed:** Verify the kubeconfig file and check network connectivity.
-  * **No resources visible:** Check your current namespace and RBAC permissions.
+### Common Issues
 
------
+1. **kubectl not found**: Ensure kubectl is in `/app/k8s/tools/kubectl`
+2. **No clusters found**: Check cluster directories in `/app/k8s/clusters/`
+3. **Connection failed**: Verify kubeconfig files are valid
+4. **Charts not showing**: Ensure Helm charts are in `/app/k8s/projects/helm-charts/`
 
-### Development
+### Debug Mode
 
-  * **Architecture:** `K8sManager` handles commands, `ClusterManager` handles cluster discovery, and `TUI Components` manage the interface.
-  * **Extending Functionality:** The codebase is structured for easy extension, allowing you to add new resource types, command handlers, and deployment workflows.
-  * **Contributing:** Fork the repository, create a feature branch, add tests, and submit a pull request.
+Enable debug logging in your config:
 
------
+```yaml
+app:
+  log_level: DEBUG
+```
 
-### Security Considerations
+### Logs Location
 
-  * Store kubeconfig files with appropriate permissions (`600`).
-  * Use RBAC to limit cluster access scope.
-  * Audit command execution logs for security compliance.
+- Application logs: `~/.clusterm/logs/clusterm.log`
+- Configuration: `~/.clusterm/config.yaml`
 
------
+## Contributing
 
-### License
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests for new functionality
+5. Ensure all tests pass
+6. Submit a pull request
 
-MIT License - see LICENSE file for details
+## License
 
-### Support
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-  * **Issues:** GitHub Issues
-  * **Documentation:** Wiki
-  * **Community:** Discussions
+## Roadmap
 
-Built for DevOps teams who value both power and usability in their Kubernetes management tools.
+### Version 0.2.0
+- [ ] Resource editing capabilities
+- [ ] Custom resource definitions (CRDs) support
+- [ ] Enhanced filtering and searching
+- [ ] Metrics and monitoring integration
+
+### Version 0.3.0
+- [ ] Multi-context support
+- [ ] Backup and restore functionality
+- [ ] Advanced Helm operations
+- [ ] Resource templates
+
+## Support
+
+For support, issues, or feature requests, please open an issue on the GitHub repository.
