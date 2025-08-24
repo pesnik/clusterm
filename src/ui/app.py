@@ -66,6 +66,33 @@ class ClusterMApp(App):
         height: 100%;
     }
     
+    .action-buttons {
+        margin-bottom: 1;
+    }
+    
+    .action-btn {
+        width: 100%;
+        margin: 0 0 1 0;
+        height: 3;
+    }
+    
+    .charts-section {
+        height: 1fr;
+    }
+    
+    .section-title {
+        text-style: bold;
+        color: $primary;
+        margin-bottom: 1;
+        text-align: center;
+    }
+    
+    .deploy-btn {
+        width: 100%;
+        margin-top: 1;
+        height: 3;
+    }
+    
     /* Tables */
     DataTable {
         height: 100%;
@@ -98,12 +125,20 @@ class ClusterMApp(App):
     }
     
     /* Modals */
+    ModalScreen {
+        align: center middle;
+    }
+    
     .modal {
         align: center middle;
         width: 60;
-        height: 20;
+        height: auto;
+        min-height: 20;
+        max-height: 80%;
         background: $surface;
         border: solid $primary;
+        padding: 1;
+        margin: 0;
     }
     
     .modal.large-modal {
@@ -128,10 +163,13 @@ class ClusterMApp(App):
     .modal-buttons {
         align: center middle;
         height: 3;
+        width: 100%;
+        margin-top: 1;
     }
     
     .modal-buttons Button {
         margin: 0 1;
+        min-width: 16;
     }
     
     .modal-close-btn {
@@ -139,11 +177,28 @@ class ClusterMApp(App):
         margin-top: 1;
     }
     
+    .input-label {
+        color: $text;
+        text-style: bold;
+        margin-top: 1;
+        margin-bottom: 1;
+    }
+    
+    .examples-title {
+        color: $primary;
+        text-style: bold;
+        margin-top: 1;
+        margin-bottom: 1;
+    }
+    
     .command-examples {
         color: $text-muted;
         text-style: italic;
         margin-top: 1;
-        height: 3;
+        height: auto;
+        background: $surface-darken-1;
+        padding: 1;
+        border-left: solid $primary;
     }
     
     .current-cluster {

@@ -23,26 +23,26 @@ class CommandModal(ModalScreen):
     
     def compose(self):
         """Compose the command modal"""
-        with Container(id="command-modal", classes="modal"):
-            yield Static("Execute Command", classes="modal-title")
+        with Container(classes="modal"):
+            yield Static("⚡ Execute Command", classes="modal-title")
             
             with Vertical(classes="modal-content"):
-                yield Label("Command Type:")
+                yield Label("Command Type:", classes="input-label")
                 yield Select([
                     ("kubectl", "kubectl"), 
                     ("helm", "helm")
                 ], id="command-type")
                 
-                yield Label("Command:")
+                yield Label("Command:", classes="input-label")
                 yield Input(
                     placeholder="e.g., get pods --all-namespaces", 
                     id="command-input"
                 )
                 
-                yield Label("Examples:")
+                yield Static("💡 Examples:", classes="examples-title")
                 yield Static(
-                    "kubectl: get pods, get services, describe pod podname\n"
-                    "helm: list, status release-name, history release-name",
+                    "kubectl: get pods, get services, describe pod <podname>\n"
+                    "helm: list, status <release-name>, history <release-name>",
                     classes="command-examples"
                 )
             
@@ -90,8 +90,8 @@ class ConfigModal(ModalScreen):
     
     def compose(self):
         """Compose the configuration modal"""
-        with Container(id="config-modal", classes="modal"):
-            yield Static(f"Configure {self.chart_name}", classes="modal-title")
+        with Container(classes="modal"):
+            yield Static(f"⚙️ Configure {self.chart_name}", classes="modal-title")
             
             with Vertical(classes="modal-content"):
                 yield Label("Namespace:")
@@ -165,7 +165,7 @@ class LogModal(ModalScreen):
     
     def compose(self):
         """Compose the log modal"""
-        with Container(id="log-modal", classes="modal large-modal"):
+        with Container(classes="modal large-modal"):
             yield Static(self.title, classes="modal-title")
             yield Log(highlight=True, id="log-content")
             yield Button("Close (Esc)", id="close-btn", classes="modal-close-btn")
@@ -201,8 +201,8 @@ class ClusterSwitchModal(ModalScreen):
     
     def compose(self):
         """Compose the cluster switch modal"""
-        with Container(id="cluster-modal", classes="modal"):
-            yield Static("Switch Cluster", classes="modal-title")
+        with Container(classes="modal"):
+            yield Static("🔄 Switch Cluster", classes="modal-title")
             
             with Vertical(classes="modal-content"):
                 if self.current_cluster:

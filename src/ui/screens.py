@@ -4,7 +4,7 @@ Screen components for the application
 
 from typing import Dict, Any, Optional
 from textual.containers import Container, Horizontal, Vertical
-from textual.widgets import Header, Footer, Button, TabbedContent, TabPane, DataTable
+from textual.widgets import Header, Footer, Button, TabbedContent, TabPane, DataTable, Static
 from textual.screen import Screen
 from textual.reactive import reactive
 from textual import on
@@ -56,11 +56,15 @@ class MainScreen(Screen):
             with Horizontal(id="main-content"):
                 # Left panel - Charts and actions
                 with Vertical(id="charts-panel", classes="panel"):
-                    yield Button("Switch Cluster", id="switch-cluster-btn")
-                    yield Button("Test Connection", id="test-connection-btn") 
-                    yield Button("Execute Command", id="execute-command-btn")
-                    yield DataTable(id="charts-table")
-                    yield Button("Deploy Selected", variant="primary", id="deploy-chart-btn")
+                    with Vertical(classes="action-buttons"):
+                        yield Button("🔄 Switch Cluster", id="switch-cluster-btn", classes="action-btn")
+                        yield Button("🔗 Test Connection", id="test-connection-btn", classes="action-btn") 
+                        yield Button("⚡ Execute Command", id="execute-command-btn", classes="action-btn")
+                    
+                    with Vertical(classes="charts-section"):
+                        yield Static("📦 Helm Charts", classes="section-title")
+                        yield DataTable(id="charts-table")
+                        yield Button("🚀 Deploy Selected", variant="primary", id="deploy-chart-btn", classes="deploy-btn")
                 
                 # Right panel - Resource tabs
                 with TabbedContent(id="resources-tabs"):
