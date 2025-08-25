@@ -1,6 +1,6 @@
 [project]
 name = "clusterm"
-version = "0.2.0"
+version = "0.3.0"
 description = "Clusterm - A modular, extensible TUI for Kubernetes deployment management"
 readme = "README.md"
 requires-python = ">=3.11"

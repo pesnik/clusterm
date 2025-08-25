@@ -5,6 +5,15 @@ All notable changes to Clusterm will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+## [0.3.0] - 2025-08-25
+
+### Changes
+- feat: Add intelligent command input with prompt_toolkit integration
+- Release v0.2.0: Command Pad Intelligence
+- fix: modal opened on center
+- Refactor monolithic TUI into robust modular architecture
+- Update README.md
 ## [0.2.0] - 2025-08-25
 
 ### 🚀 Added
