@@ -27,41 +27,60 @@ class CommandModal(ModalScreen):
             yield Static("⚡ Execute Command", classes="modal-title")
             
             with Vertical(classes="modal-content"):
-                yield Label("Command Type:", classes="input-label")
-                yield Select([
-                    ("kubectl", "kubectl"), 
-                    ("helm", "helm")
-                ], id="command-type")
-                
                 yield Label("Command:", classes="input-label")
                 yield Input(
-                    placeholder="e.g., get pods --all-namespaces", 
+                    placeholder="e.g., kubectl get pods --all-namespaces, helm list", 
                     id="command-input"
                 )
                 
                 yield Static("💡 Examples:", classes="examples-title")
                 yield Static(
-                    "kubectl: get pods, get services, describe pod <podname>\n"
-                    "helm: list, status <release-name>, history <release-name>",
+                    "kubectl get pods, kubectl get services, kubectl describe pod <podname>\n"
+                    "helm list, helm status <release-name>, helm history <release-name>",
                     classes="command-examples"
                 )
+                
+                yield Static("ℹ️ Command type (kubectl/helm) will be auto-detected", classes="auto-detect-info")
             
             with Horizontal(classes="modal-buttons"):
-                yield Button("Execute", variant="primary", id="execute-btn")
-                yield Button("Cancel (Esc)", variant="default", id="cancel-btn")
+                yield Button("⚡ Execute", variant="primary", id="execute-btn")
+                yield Button("❌ Cancel (Esc)", variant="default", id="cancel-btn")
     
     @on(Button.Pressed, "#execute-btn")
     def execute_pressed(self):
         """Handle execute button press"""
-        cmd_type = self.query_one("#command-type").value
-        cmd_args = self.query_one("#command-input").value.strip()
+        full_command = self.query_one("#command-input").value.strip()
         
-        if cmd_args:
+        if full_command:
+            # Auto-detect command type and extract args
+            cmd_type, cmd_args = self._parse_command(full_command)
             self.result = ("execute", cmd_type, cmd_args)
         else:
             self.result = ("cancel", None, None)
         
         self.dismiss(self.result)
+    
+    def _parse_command(self, full_command: str):
+        """Parse full command to detect type and extract arguments"""
+        command_lower = full_command.lower().strip()
+        
+        if command_lower.startswith('kubectl'):
+            # Remove 'kubectl' from the beginning and return the rest as args
+            cmd_args = full_command[7:].strip()  # Remove 'kubectl'
+            return "kubectl", cmd_args
+        elif command_lower.startswith('helm'):
+            # Remove 'helm' from the beginning and return the rest as args
+            cmd_args = full_command[4:].strip()  # Remove 'helm'
+            return "helm", cmd_args
+        else:
+            # Try to infer from common patterns, default to kubectl
+            if any(keyword in command_lower for keyword in ['get pods', 'get services', 'describe', 'logs', 'exec']):
+                return "kubectl", full_command
+            elif any(keyword in command_lower for keyword in ['install', 'upgrade', 'list', 'status', 'uninstall']):
+                return "helm", full_command
+            else:
+                # Default to kubectl and let user prefix with kubectl if needed
+                return "kubectl", full_command
     
     @on(Button.Pressed, "#cancel-btn")
     def cancel_pressed(self):

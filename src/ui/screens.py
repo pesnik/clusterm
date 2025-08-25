@@ -15,6 +15,7 @@ from .components.tables import (
 )
 from .components.panels import LogPanel, StatusPanel
 from .components.modals import CommandModal, ConfigModal, LogModal, ClusterSwitchModal
+from .components.command_pad import CommandPad
 
 
 class MainScreen(Screen):
@@ -24,12 +25,13 @@ class MainScreen(Screen):
     selected_chart = reactive(None)
     selected_resource = reactive(None)
     
-    def __init__(self, k8s_manager, config, event_bus, logger, **kwargs):
+    def __init__(self, k8s_manager, config, event_bus, logger, command_history, **kwargs):
         super().__init__(**kwargs)
         self.k8s_manager = k8s_manager
         self.config = config
         self.event_bus = event_bus
         self.logger = logger
+        self.command_history = command_history
         
         # Resource tables
         self.tables: Dict[str, DataTable] = {}
@@ -100,6 +102,9 @@ class MainScreen(Screen):
                         
                         with Horizontal(classes="tab-actions"):
                             yield Button("Set Active", id="set-namespace-btn")
+                    
+                    with TabPane("Command Pad", id="command-pad-tab"):
+                        yield CommandPad(self.command_history, id="command-pad")
             
             # Bottom panel - Logs
             yield LogPanel(id="log-panel")
@@ -116,7 +121,7 @@ class MainScreen(Screen):
         def log_startup():
             try:
                 log_panel = self.query_one("#log-panel", LogPanel)
-                log_panel.write_log("ClusterM started successfully")
+                log_panel.write_log("Clusterm started successfully")
             except:
                 pass
         
@@ -382,6 +387,10 @@ class MainScreen(Screen):
     
     def _on_cluster_changed(self, event):
         """Handle cluster change events"""
+        # Update command history context when cluster changes
+        self._update_command_history_context()
+        self._refresh_command_pad()
+        
         self._refresh_all_data()
         self._update_status_panel()
         
@@ -403,6 +412,9 @@ class MainScreen(Screen):
         new_namespace = event.data.get("namespace")
         if new_namespace:
             self.current_namespace = new_namespace
+            # Update command history context when namespace changes
+            self._update_command_history_context()
+            self._refresh_command_pad()
             self._refresh_all_data()
     
     # Button handlers
@@ -473,7 +485,13 @@ class MainScreen(Screen):
         
         action, cmd_type, cmd_args = result
         log_panel = self.query_one("#log-panel", LogPanel)
-        log_panel.write_log(f"Executing {cmd_type} {cmd_args}")
+        
+        # Update command history context
+        self._update_command_history_context()
+        
+        # Build the full command for history
+        full_command = f"{cmd_type} {cmd_args}"
+        log_panel.write_log(f"Executing {full_command}")
         
         if cmd_type == "kubectl":
             success, output = self.k8s_manager.command_executor.execute_kubectl(cmd_args.split())
@@ -481,6 +499,10 @@ class MainScreen(Screen):
             success, output = self.k8s_manager.command_executor.execute_helm(cmd_args.split())
         
         if success:
+            # Add to command history on successful execution (context-aware)
+            self.command_history.add_command(full_command)
+            # Refresh command pad to show new command
+            self._refresh_command_pad()
             log_panel.write_log("Command executed successfully")
             if output.strip():
                 modal = LogModal(f"{cmd_type.title()} Output", output)
@@ -517,3 +539,67 @@ class MainScreen(Screen):
         
         log_panel = self.query_one("#log-panel", LogPanel)
         log_panel.write_log(f"Selected chart: {self.selected_chart}")
+    
+    def _update_command_history_context(self):
+        """Update command history context based on current cluster/namespace"""
+        try:
+            current_cluster = self.k8s_manager.cluster_manager.get_current_cluster()
+            cluster_name = current_cluster["name"] if current_cluster else "default"
+            namespace = self.current_namespace
+            
+            self.command_history.set_context(cluster_name, namespace)
+        except Exception as e:
+            self.logger.error(f"Error updating command history context: {e}")
+            # Fallback to defaults
+            self.command_history.set_context("default", "default")
+    
+    def _refresh_command_pad(self):
+        """Refresh the command pad to show updated commands"""
+        try:
+            command_pad = self.query_one("#command-pad", CommandPad)
+            command_pad.action_refresh()
+        except Exception:
+            # Command pad might not be visible/mounted
+            pass
+    
+    @on(CommandPad.CommandSelected)
+    def handle_command_pad_selection(self, message):
+        """Handle command selection from command pad"""
+        if message.command is None:
+            # Signal to show add dialog - not implemented yet
+            log_panel = self.query_one("#log-panel", LogPanel)
+            log_panel.write_log("Add current command feature not implemented yet")
+            return
+        
+        # Update command history context
+        self._update_command_history_context()
+        
+        # Execute the selected command
+        cmd_type, cmd_args = message.command.command_type, message.command.command
+        
+        # Remove the command prefix if it exists in the stored command
+        if cmd_args.lower().startswith(cmd_type.lower()):
+            cmd_args = cmd_args[len(cmd_type):].strip()
+        
+        log_panel = self.query_one("#log-panel", LogPanel)
+        full_command = f"{cmd_type} {cmd_args}"
+        log_panel.write_log(f"Executing from pad: {full_command}")
+        
+        if cmd_type == "kubectl":
+            success, output = self.k8s_manager.command_executor.execute_kubectl(cmd_args.split())
+        else:
+            success, output = self.k8s_manager.command_executor.execute_helm(cmd_args.split())
+        
+        if success:
+            # Increment usage count for this command
+            self.command_history.add_command(full_command)
+            # Update usage count in command pad
+            self._refresh_command_pad()
+            log_panel.write_log("Command executed successfully")
+            if output.strip():
+                modal = LogModal(f"{cmd_type.title()} Output", output)
+                self.app.push_screen(modal)
+        else:
+            log_panel.write_log(f"Command failed: {output}", "ERROR")
+        
+        self._refresh_all_data()

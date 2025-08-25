@@ -2,18 +2,21 @@
 Main TUI application
 """
 
+from pathlib import Path
 from textual.app import App
 from textual.binding import Binding
+from ..__version__ import __version__
 from ..core.config import Config
 from ..core.logger import Logger
 from ..core.events import EventBus
+from ..core.command_history import CommandHistoryManager
 from ..k8s.manager import K8sManager
 from ..plugins.manager import PluginManager
 from .screens import MainScreen
 
 
-class ClusterMApp(App):
-    """Main ClusterM TUI Application"""
+class ClustermApp(App):
+    """Main Clusterm TUI Application"""
     
     CSS = """
     /* Global styles */
@@ -208,6 +211,14 @@ class ClusterMApp(App):
         height: 1;
     }
     
+    .auto-detect-info {
+        color: $text-muted;
+        text-style: italic;
+        margin-top: 1;
+        height: 1;
+        text-align: center;
+    }
+    
     /* Input styling */
     Input {
         margin-bottom: 1;
@@ -219,6 +230,50 @@ class ClusterMApp(App):
     
     Switch {
         margin-bottom: 1;
+    }
+    
+    /* Command pad */
+    .command-pad {
+        height: 100%;
+        padding: 1;
+    }
+    
+    .command-pad-title {
+        text-align: center;
+        color: $primary;
+        text-style: bold;
+        height: 1;
+        margin-bottom: 1;
+    }
+    
+    .command-pad-controls {
+        height: 3;
+        align: center middle;
+        margin-bottom: 1;
+    }
+    
+    .command-pad-controls Select {
+        width: 50%;
+        margin-right: 1;
+    }
+    
+    .command-pad-controls Input {
+        width: 50%;
+    }
+    
+    .commands-table {
+        height: 1fr;
+        margin-bottom: 1;
+    }
+    
+    .command-pad-buttons {
+        height: 3;
+        align: center middle;
+    }
+    
+    .command-pad-buttons Button {
+        margin: 0 1;
+        min-width: 12;
     }
     """
     
@@ -240,6 +295,9 @@ class ClusterMApp(App):
         self.config = Config(config_path)
         self.logger = Logger(self.config)
         self.event_bus = EventBus()
+        config_dir = Path(self.config.get("app.config_dir", "~/.clusterm")).expanduser()
+        self.command_history = CommandHistoryManager(config_dir)
+        
         
         # Initialize managers
         self.k8s_manager = K8sManager(self.config, self.event_bus, self.logger)
@@ -251,6 +309,7 @@ class ClusterMApp(App):
         # Main screen
         self.main_screen = None
     
+    
     def _setup_plugins(self):
         """Setup and load plugins"""
         try:
@@ -261,11 +320,13 @@ class ClusterMApp(App):
     
     def on_mount(self):
         """Initialize the application"""
+        self.title = f"Clusterm v{__version__}"
         self.main_screen = MainScreen(
             self.k8s_manager,
             self.config,
             self.event_bus,
-            self.logger
+            self.logger,
+            self.command_history
         )
         self.push_screen(self.main_screen)
     
@@ -273,12 +334,12 @@ class ClusterMApp(App):
         """Cleanup when application exits"""
         try:
             self.plugin_manager.shutdown()
-            self.logger.info("ClusterM shutdown complete")
+            self.logger.info("Clusterm shutdown complete")
         except Exception as e:
             self.logger.error(f"Error during shutdown: {e}")
     
     # Actions
-    def action_quit(self):
+    async def action_quit(self):
         """Quit the application"""
         self.exit()
     
@@ -310,8 +371,12 @@ class ClusterMApp(App):
     def action_clear_logs(self):
         """Clear system logs"""
         if self.main_screen:
-            log_panel = self.main_screen.query_one("#log-panel")
-            log_panel.clear_log()
+            try:
+                from .components.panels import LogPanel
+                log_panel = self.main_screen.query_one("#log-panel", LogPanel)
+                log_panel.clear_log()
+            except Exception as e:
+                self.logger.error(f"Error clearing logs: {e}")
     
     def action_cancel_modal(self):
         """Cancel any active modal - handled by modal itself"""

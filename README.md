@@ -1,6 +1,6 @@
-# ClusterM - Kubernetes Deployment Manager TUI
+# Clusterm - Kubernetes Deployment Manager TUI
 
-A robust, modular, and extensible Terminal User Interface (TUI) application for managing Kubernetes deployments. Built with Python and Textual, ClusterM provides an intuitive interface for cluster management, resource monitoring, and Helm chart deployments.
+A robust, modular, and extensible Terminal User Interface (TUI) application for managing Kubernetes deployments. Built with Python and Textual, Clusterm provides an intuitive interface for cluster management, resource monitoring, and Helm chart deployments.
 
 ## Features
 
@@ -8,7 +8,8 @@ A robust, modular, and extensible Terminal User Interface (TUI) application for 
 - **Multi-Cluster Management**: Switch between multiple Kubernetes clusters seamlessly
 - **Resource Monitoring**: Real-time viewing of deployments, pods, services, and namespaces
 - **Helm Integration**: Deploy and manage Helm charts with interactive configuration
-- **Command Execution**: Execute kubectl and helm commands directly from the interface
+- **Smart Command Execution**: Execute kubectl and helm commands with auto-detection
+- **Command Pad**: Context-aware command history that learns from your usage patterns
 - **Log Viewing**: Access pod logs and command output in dedicated viewers
 
 ### 🏗️ Architecture Features
@@ -52,7 +53,8 @@ clusterm/
 │   │   ├── config.py        # Configuration management
 │   │   ├── events.py        # Event system
 │   │   ├── exceptions.py    # Custom exceptions
-│   │   └── logger.py        # Logging infrastructure
+│   │   ├── logger.py        # Logging infrastructure
+│   │   └── command_history.py # Command pad functionality
 │   ├── k8s/                 # Kubernetes operations
 │   │   ├── manager.py       # Main K8s manager
 │   │   ├── cluster.py       # Cluster management
@@ -68,7 +70,8 @@ clusterm/
 │       └── components/      # Reusable UI components
 │           ├── tables.py    # Resource tables
 │           ├── panels.py    # UI panels
-│           └── modals.py    # Modal dialogs
+│           ├── modals.py    # Modal dialogs
+│           └── command_pad.py # Command pad component
 ├── tests/                   # Test suite
 ├── main.py                  # Application entry point
 └── pyproject.toml          # Project configuration
@@ -78,7 +81,7 @@ clusterm/
 
 ### Basic Usage
 
-Run ClusterM with default configuration:
+Run Clusterm with default configuration:
 ```bash
 python main.py
 ```
@@ -94,13 +97,30 @@ python main.py /path/to/config.yaml
 - `r` - Refresh all data
 - `c` - Switch cluster
 - `t` - Test cluster connection
-- `x` - Execute command
+- `x` - Execute command (with smart auto-detection)
 - `d` - Deploy selected chart
 - `Ctrl+L` - Clear logs
 
+### Command Pad
+
+The **Command Pad** is a revolutionary feature that learns from your kubectl and helm usage patterns:
+
+- **Context-Aware**: Commands are stored per cluster and namespace combination
+- **Smart Storage**: Only successful commands are saved to your history
+- **Usage Tracking**: See which commands you use most frequently
+- **Instant Reuse**: Click any command in your pad to execute it again
+- **Real-time Search**: Quickly find commands with built-in search
+- **Multiple Views**: Browse by Most Frequent, Recent, or All Commands
+
+**Benefits:**
+- ✅ **Zero Noise**: Only see commands relevant to your current cluster/namespace
+- ✅ **Learn Your Patterns**: Commands adapt to your actual workflow
+- ✅ **Save Time**: No more retyping complex commands
+- ✅ **Context Switching**: Separate command histories for different environments
+
 ### Directory Structure
 
-ClusterM expects the following directory structure for Kubernetes resources:
+Clusterm expects the following directory structure for Kubernetes resources:
 
 ```
 /app/k8s/                    # Base K8s directory (configurable)
@@ -124,7 +144,7 @@ ClusterM expects the following directory structure for Kubernetes resources:
 
 ## Configuration
 
-ClusterM uses a YAML configuration file located at `~/.clusterm/config.yaml` by default.
+Clusterm uses a YAML configuration file located at `~/.clusterm/config.yaml` by default.
 
 ### Default Configuration
 
@@ -153,7 +173,7 @@ plugins:
 
 ### Customization
 
-You can customize ClusterM behavior by:
+You can customize Clusterm behavior by:
 
 1. **Configuration File**: Modify `~/.clusterm/config.yaml`
 2. **Environment Variables**: Override specific settings
@@ -162,7 +182,7 @@ You can customize ClusterM behavior by:
 
 ## Plugin Development
 
-ClusterM supports custom plugins for extending functionality. Create a plugin by:
+Clusterm supports custom plugins for extending functionality. Create a plugin by:
 
 1. Create a plugin directory: `~/.clusterm/plugins/my-plugin/`
 2. Add a `plugin.py` file with your plugin class:
@@ -312,6 +332,8 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## Roadmap
 
 ### Version 0.2.0
+- [x] **Command Pad** - Context-aware command history and reuse
+- [x] **Smart Command Execution** - Auto-detection of kubectl/helm commands
 - [ ] Resource editing capabilities
 - [ ] Custom resource definitions (CRDs) support
 - [ ] Enhanced filtering and searching

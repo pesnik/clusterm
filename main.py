@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
-ClusterM - Kubernetes Deployment Manager TUI
+Clusterm - Kubernetes Deployment Manager TUI
 A modular, extensible interface for managing Kubernetes deployments
 """
 
 import sys
 from pathlib import Path
-from src.ui.app import ClusterMApp
+from src.ui.app import ClustermApp
 
 
 def main():
@@ -18,13 +18,13 @@ def main():
     
     # Create and run the application
     try:
-        app = ClusterMApp(config_path)
+        app = ClustermApp(config_path)
         app.run()
     except KeyboardInterrupt:
-        print("\nExiting ClusterM...")
+        print("\nExiting Clusterm...")
         sys.exit(0)
     except Exception as e:
-        print(f"Error starting ClusterM: {e}")
+        print(f"Error starting Clusterm: {e}")
         sys.exit(1)
 
 

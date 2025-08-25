@@ -2,8 +2,8 @@
 UI module - Modular Textual interface components
 """
 
-from .app import ClusterMApp
+from .app import ClustermApp
 from .components import ResourceTable, LogPanel, CommandModal
 from .screens import MainScreen
 
-__all__ = ["ClusterMApp", "ResourceTable", "LogPanel", "CommandModal", "MainScreen"]
+__all__ = ["ClustermApp", "ResourceTable", "LogPanel", "CommandModal", "MainScreen"]
