@@ -13,7 +13,7 @@ from ..core.command_history import CommandHistoryManager
 from ..k8s.manager import K8sManager
 from ..plugins.manager import PluginManager
 from .screens import MainScreen
-from .components.intelligent_command_input import IntelligentCommandInput
+from .components.command_input import CommandInput
 
 
 class ClustermApp(App):
@@ -466,8 +466,8 @@ class ClustermApp(App):
         """Launch smart input"""
         if self.main_screen:
             try:
-                smart_input = self.main_screen.query_one("#intelligent-input", IntelligentCommandInput)
-                smart_input.action_launch_intelligent_input()
+                smart_input = self.main_screen.query_one("#intelligent-input", CommandInput)
+                smart_input.action_launch_command_input()
             except Exception:
                 # Fallback to regular execute command
                 self.main_screen.execute_command()

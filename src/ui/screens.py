@@ -16,7 +16,7 @@ from .components.tables import (
 from .components.panels import LogPanel, StatusPanel
 from .components.modals import CommandModal, ConfigModal, LogModal, ClusterSwitchModal
 from .components.command_pad import CommandPad
-from .components.intelligent_command_input import IntelligentCommandInput
+from .components.command_input import CommandInput
 
 
 class MainScreen(Screen):
@@ -108,10 +108,10 @@ class MainScreen(Screen):
                         yield CommandPad(self.command_history, id="command-pad")
                     
                     with TabPane("Smart Input", id="smart-input-tab"):
-                        yield IntelligentCommandInput(
+                        yield CommandInput(
                             self.command_history, 
                             self.k8s_manager,
-                            id="intelligent-input"
+                            id="interactive-input"
                         )
             
             # Bottom panel - Logs
@@ -612,7 +612,7 @@ class MainScreen(Screen):
         
         self._refresh_all_data()
     
-    @on(IntelligentCommandInput.CommandEntered)
+    @on(CommandInput.CommandEntered)
     def handle_intelligent_command(self, message):
         """Handle command from intelligent input"""
         # Update command history context

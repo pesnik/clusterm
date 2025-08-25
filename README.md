@@ -8,7 +8,7 @@ A robust, modular, and extensible Terminal User Interface (TUI) application for 
 - **Multi-Cluster Management**: Switch between multiple Kubernetes clusters seamlessly
 - **Resource Monitoring**: Real-time viewing of deployments, pods, services, and namespaces
 - **Helm Integration**: Deploy and manage Helm charts with interactive configuration
-- **Intelligent Command Input**: Production-grade prompt_toolkit integration with real-time auto-completion
+- **Interactive Command Input**: Production-grade prompt_toolkit integration with real-time auto-completion
 - **Smart Command Execution**: Execute kubectl and helm commands with auto-detection
 - **Command Pad**: Context-aware command history that learns from your usage patterns
 - **Log Viewing**: Access pod logs and command output in dedicated viewers
@@ -133,9 +133,9 @@ clusterm/
 │           ├── panels.py    # UI panels
 │           ├── modals.py    # Modal dialogs
 │           ├── command_pad.py # Command pad component
-│           └── intelligent_command_input.py # Smart input with prompt_toolkit
+│           └── interactive_command_input.py # Interactive input with prompt_toolkit
 ├── examples/                # Demo and example scripts
-│   └── intelligent_input_demo.py # Interactive demo of smart input
+│   └── interactive_input_demo.py # Demo of interactive command input
 ├── tests/                   # Test suite
 ├── main.py                  # Application entry point
 └── pyproject.toml          # Project configuration

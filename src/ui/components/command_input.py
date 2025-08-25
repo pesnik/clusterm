@@ -1,5 +1,5 @@
 """
-Intelligent Command Input with prompt_toolkit integration
+Command Input with prompt_toolkit integration
 A production-grade command input system that provides:
 - Real-time auto-completion with context awareness
 - Syntax highlighting for kubectl/helm commands  
@@ -460,9 +460,9 @@ class KubectlHelmValidator(Validator):
             )
 
 
-class IntelligentCommandInput(Widget):
+class CommandInput(Widget):
     """
-    Intelligent command input widget using prompt_toolkit
+    Command input widget using prompt_toolkit
     Provides production-grade command line interface with:
     - Real-time auto-completion
     - Syntax highlighting
@@ -472,7 +472,7 @@ class IntelligentCommandInput(Widget):
     """
     
     BINDINGS = [
-        Binding("ctrl+i", "launch_intelligent_input", "Smart Input", priority=True),
+        Binding("ctrl+i", "launch_command_input", "Command Input", priority=True),
         Binding("escape", "cancel_input", "Cancel", priority=True),
     ]
     
@@ -516,25 +516,25 @@ class IntelligentCommandInput(Widget):
     
     def compose(self):
         """Compose the intelligent input widget"""
-        with Container(classes="intelligent-command-input"):
-            yield Static("🧠 Intelligent Command Input", classes="input-title")
-            yield Static("Press Ctrl+I to launch smart input terminal", classes="input-hint")
+        with Container(classes="command-input"):
+            yield Static("⚡ Command Input", classes="input-title")
+            yield Static("Press Ctrl+I to launch command input terminal", classes="input-hint")
             
             with Horizontal(classes="input-buttons"):
-                yield Button("🧠 Smart Input (Ctrl+I)", variant="primary", id="smart-input-btn")
+                yield Button("⚡ Command Input (Ctrl+I)", variant="primary", id="command-input-btn")
                 yield Button("📋 From Pad", variant="default", id="pad-btn")
                 yield Button("ℹ️ Help", variant="default", id="help-btn")
     
-    @on(Button.Pressed, "#smart-input-btn")
-    def smart_input_pressed(self):
-        """Launch intelligent input"""
-        self.action_launch_intelligent_input()
+    @on(Button.Pressed, "#command-input-btn")
+    def command_input_pressed(self):
+        """Launch command input"""
+        self.action_launch_command_input()
     
     @on(Button.Pressed, "#help-btn")
     def help_pressed(self):
         """Show help information"""
         help_text = """
-🧠 Intelligent Command Input Help
+⚡ Command Input Help
 
 Features:
 • Tab - Auto-completion with live cluster data
@@ -556,12 +556,12 @@ intelligent suggestions based on your current cluster context.
         # This would show in a modal - for now just log
         pass
     
-    def action_launch_intelligent_input(self):
-        """Launch the intelligent prompt_toolkit input session"""
-        asyncio.create_task(self._run_intelligent_session())
+    def action_launch_command_input(self):
+        """Launch the command input prompt_toolkit session"""
+        asyncio.create_task(self._run_command_session())
     
-    async def _run_intelligent_session(self):
-        """Run the intelligent input session using prompt_toolkit"""
+    async def _run_command_session(self):
+        """Run the command input session using prompt_toolkit"""
         try:
             # Temporarily suspend Textual rendering
             app = self.app
@@ -584,7 +584,7 @@ intelligent suggestions based on your current cluster context.
                 )
                 
                 # Show welcome message
-                print("🧠 Intelligent Command Input Active")
+                print("⚡ Command Input Active")
                 print("Features: Tab completion, ↑↓ history, real-time validation")
                 print("Type your kubectl/helm command (Ctrl+C to cancel):")
                 print()
@@ -618,7 +618,7 @@ intelligent suggestions based on your current cluster context.
                 
         except Exception as e:
             # Fallback error handling
-            print(f"Error in intelligent input: {e}")
+            print(f"Error in command input: {e}")
     
     def _detect_command_type(self, command: str) -> str:
         """Detect command type (kubectl/helm)"""

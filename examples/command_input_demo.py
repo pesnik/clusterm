@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 
-from src.ui.components.intelligent_command_input import KubectlHelmCompleter, KubectlHelmValidator
+from src.ui.components.command_input import KubectlHelmCompleter, KubectlHelmValidator
 from src.core.live_completions import LiveCompletionProvider
 from src.core.command_history import CommandHistoryManager
 from prompt_toolkit import PromptSession
