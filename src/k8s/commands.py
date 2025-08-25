@@ -24,15 +24,52 @@ class CommandExecutor:
             base_path / "tools" / "helm"
         ]
         self.current_kubeconfig: Optional[Path] = None
+        
+        # Try to find tools in system PATH if not in local tools directory
+        self.kubectl_binary = self._find_kubectl_binary()
+        self.helm_binary = self._find_helm_binary()
     
     def set_kubeconfig(self, kubeconfig_path: Optional[Path]):
         """Set the kubeconfig path for commands"""
         self.current_kubeconfig = kubeconfig_path
     
+    def _find_kubectl_binary(self) -> str:
+        """Find kubectl binary in local tools or system PATH"""
+        # Check local tools directory first
+        if self.kubectl_path.exists():
+            return str(self.kubectl_path)
+        
+        # Fall back to system PATH
+        try:
+            result = subprocess.run(['which', 'kubectl'], capture_output=True, text=True)
+            if result.returncode == 0:
+                return result.stdout.strip()
+        except Exception:
+            pass
+        
+        return None
+    
+    def _find_helm_binary(self) -> str:
+        """Find helm binary in local tools or system PATH"""
+        # Check local tools directory first
+        for path in self.helm_paths:
+            if path.exists():
+                return str(path)
+        
+        # Fall back to system PATH
+        try:
+            result = subprocess.run(['which', 'helm'], capture_output=True, text=True)
+            if result.returncode == 0:
+                return result.stdout.strip()
+        except Exception:
+            pass
+        
+        return None
+
     def execute_kubectl(self, args: List[str], timeout: int = 30) -> Tuple[bool, str]:
         """Execute a kubectl command"""
-        if not self.kubectl_path.exists():
-            error_msg = f"kubectl not found at {self.kubectl_path}"
+        if not self.kubectl_binary:
+            error_msg = f"kubectl not found in {self.kubectl_path} or system PATH"
             self.logger.error(error_msg)
             return False, error_msg
         
@@ -41,13 +78,12 @@ class CommandExecutor:
             self.logger.error(error_msg)
             return False, error_msg
         
-        cmd = [str(self.kubectl_path)] + args
+        cmd = [self.kubectl_binary] + args
         return self._execute_command(cmd, "kubectl", timeout)
     
     def execute_helm(self, args: List[str], timeout: int = 60) -> Tuple[bool, str]:
         """Execute a helm command"""
-        helm_binary = self._find_helm_binary()
-        if not helm_binary:
+        if not self.helm_binary:
             error_msg = "Helm binary not found"
             self.logger.error(error_msg)
             return False, error_msg
@@ -57,15 +93,9 @@ class CommandExecutor:
             self.logger.error(error_msg)
             return False, error_msg
         
-        cmd = [helm_binary] + args
+        cmd = [self.helm_binary] + args
         return self._execute_command(cmd, "helm", timeout)
     
-    def _find_helm_binary(self) -> Optional[str]:
-        """Find helm binary in possible locations"""
-        for helm_path in self.helm_paths:
-            if helm_path.exists():
-                return str(helm_path)
-        return None
     
     def _execute_command(self, cmd: List[str], cmd_type: str, timeout: int) -> Tuple[bool, str]:
         """Execute a command with proper environment and error handling"""

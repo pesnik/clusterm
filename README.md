@@ -62,6 +62,48 @@ python examples/intelligent_input_demo.py
 python main.py
 ```
 
+## First-Time Setup
+
+Clusterm automatically handles initial setup for you:
+
+### 1. **Automatic Directory Creation**
+On first launch, Clusterm creates:
+- `~/.clusterm/config.yaml` - Configuration file
+- `~/.clusterm/k8s/` - Kubernetes resources directory
+- Example configurations and help files
+
+### 2. **Configure Your Clusters**
+```bash
+# Option 1: Copy existing kubeconfig
+cp ~/.kube/config ~/.clusterm/k8s/clusters/my-cluster/kubeconfig
+
+# Option 2: Create symlink to existing config
+mkdir -p ~/.clusterm/k8s/clusters/my-cluster
+ln -s ~/.kube/config ~/.clusterm/k8s/clusters/my-cluster/kubeconfig
+
+# Option 3: Multiple clusters
+mkdir -p ~/.clusterm/k8s/clusters/production
+mkdir -p ~/.clusterm/k8s/clusters/staging
+# Copy respective kubeconfig files to each directory
+```
+
+### 3. **Tool Installation**
+Clusterm automatically finds kubectl and helm from your system PATH:
+```bash
+# Install tools normally (recommended)
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+
+# Clusterm will find them automatically
+```
+
+### 4. **Custom Path Configuration** (Optional)
+Edit `~/.clusterm/config.yaml`:
+```yaml
+k8s:
+  base_path: "/your/preferred/path"  # Default: ~/.clusterm/k8s
+```
+
 ## Project Structure
 
 ```
@@ -178,26 +220,41 @@ The **Smart Input** feature provides a production-grade command-line experience 
 
 ### Directory Structure
 
-Clusterm expects the following directory structure for Kubernetes resources:
+Clusterm automatically creates and manages a directory structure for Kubernetes resources. By default, this is located at `~/.clusterm/k8s/`, but can be configured in your config file.
 
+**Automatic Setup:**
+- On first run, Clusterm creates all necessary directories
+- Example configurations and README files are generated
+- Directory structure is fully customizable via configuration
+
+**Default Structure:**
 ```
-/app/k8s/                    # Base K8s directory (configurable)
-├── clusters/                # Cluster configurations
-│   ├── cluster1/
-│   │   └── kubeconfig.yaml
-│   └── cluster2/
-│       └── config
-├── tools/                   # Binary tools
-│   ├── kubectl
-│   └── helm
+~/.clusterm/k8s/             # Base K8s directory (configurable)
+├── clusters/                # Cluster configurations  
+│   ├── example-cluster/     # Auto-created example
+│   │   └── kubeconfig.example  # Instructions for setup
+│   ├── production/          # Your cluster directories
+│   │   └── kubeconfig       # Real kubeconfig files
+│   └── staging/
+│       └── kubeconfig
+├── tools/                   # Optional: Local binary tools
+│   ├── kubectl              # Falls back to system PATH
+│   ├── helm                 # Falls back to system PATH  
+│   └── README.md            # Setup instructions
 └── projects/
     └── helm-charts/         # Helm charts
-        ├── app1/
+        ├── example-app/     # Auto-created example
         │   ├── Chart.yaml
         │   └── values.yaml
-        └── app2/
+        └── your-app/        # Your actual charts
             ├── Chart.yaml
             └── values.yaml
+```
+
+**Path Configuration:**
+```yaml
+k8s:
+  base_path: "/your/custom/path"  # Default: ~/.clusterm/k8s
 ```
 
 ## Configuration
@@ -214,7 +271,7 @@ app:
   log_level: INFO
 
 k8s:
-  base_path: /app
+  base_path: ~/.clusterm/k8s    # Fully configurable path
   default_namespace: default
   kubectl_timeout: 30
   helm_timeout: 60
@@ -355,10 +412,23 @@ mypy src
 
 ### Common Issues
 
-1. **kubectl not found**: Ensure kubectl is in `/app/k8s/tools/kubectl`
-2. **No clusters found**: Check cluster directories in `/app/k8s/clusters/`
-3. **Connection failed**: Verify kubeconfig files are valid
-4. **Charts not showing**: Ensure Helm charts are in `/app/k8s/projects/helm-charts/`
+1. **kubectl not found**: 
+   - kubectl will be automatically found in system PATH
+   - Alternatively, place binary at `~/.clusterm/k8s/tools/kubectl`
+   - Configure custom path in `k8s.base_path`
+
+2. **No clusters found**: 
+   - Check cluster directories in `~/.clusterm/k8s/clusters/`
+   - Each cluster needs a `kubeconfig` file
+   - Use example files for setup guidance
+
+3. **Connection failed**: 
+   - Verify kubeconfig files are valid
+   - Check cluster connectivity: `kubectl cluster-info`
+
+4. **Charts not showing**: 
+   - Ensure Helm charts are in `~/.clusterm/k8s/projects/helm-charts/`
+   - Each chart needs `Chart.yaml` and `values.yaml`
 
 ### Debug Mode
 

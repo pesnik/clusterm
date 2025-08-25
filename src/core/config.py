@@ -2,7 +2,6 @@
 Configuration management for ClusterM
 """
 
-import os
 import yaml
 from pathlib import Path
 from typing import Dict, Any, Optional
@@ -23,7 +22,7 @@ class Config:
                 "log_level": "INFO"
             },
             "k8s": {
-                "base_path": "/app",
+                "base_path": str(Path.home() / ".clusterm" / "k8s"),
                 "default_namespace": "default",
                 "kubectl_timeout": 30,
                 "helm_timeout": 60

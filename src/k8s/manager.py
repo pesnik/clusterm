@@ -22,9 +22,12 @@ class K8sManager:
         self.logger = logger
         
         # Setup paths
-        base_path = Path(config.get('k8s.base_path', '/app'))
-        self.k8s_path = base_path / "k8s"
+        base_path = Path(config.get('k8s.base_path', Path.home() / ".clusterm" / "k8s"))
+        self.k8s_path = base_path
         self.helm_charts_path = self.k8s_path / "projects" / "helm-charts"
+        
+        # Ensure directories exist
+        self._ensure_directory_structure()
         
         # Initialize components
         self.cluster_manager = ClusterManager(
@@ -38,6 +41,122 @@ class K8sManager:
         
         # Subscribe to cluster changes
         self.event_bus.subscribe(EventType.CLUSTER_CHANGED, self._on_cluster_changed)
+    
+    def _ensure_directory_structure(self):
+        """Ensure the required directory structure exists"""
+        try:
+            # Create base directories
+            directories = [
+                self.k8s_path,
+                self.k8s_path / "clusters",
+                self.k8s_path / "tools", 
+                self.k8s_path / "projects",
+                self.helm_charts_path
+            ]
+            
+            for directory in directories:
+                directory.mkdir(parents=True, exist_ok=True)
+                
+            self.logger.info(f"Initialized Clusterm directory structure at: {self.k8s_path}")
+            
+            # Create example kubeconfig if none exist
+            clusters_dir = self.k8s_path / "clusters"
+            if not any(clusters_dir.iterdir() if clusters_dir.exists() else []):
+                self._create_example_structure()
+                
+        except Exception as e:
+            self.logger.error(f"Failed to create directory structure: {e}")
+    
+    def _create_example_structure(self):
+        """Create example configuration structure for first-time users"""
+        try:
+            # Create example cluster directory
+            example_cluster = self.k8s_path / "clusters" / "example-cluster"
+            example_cluster.mkdir(exist_ok=True)
+            
+            # Create example kubeconfig with instructions
+            kubeconfig_example = example_cluster / "kubeconfig.example"
+            kubeconfig_example.write_text("""# Example kubeconfig file
+# 1. Copy your actual kubeconfig here and rename to 'kubeconfig' (without .example)
+# 2. Or create a symlink to your existing kubeconfig:
+#    ln -s ~/.kube/config kubeconfig
+#
+# You can have multiple cluster directories under ~/.clusterm/k8s/clusters/
+# Each cluster directory should contain a 'kubeconfig' file
+
+apiVersion: v1
+kind: Config
+contexts:
+- context:
+    cluster: example-cluster
+    user: example-user
+  name: example-context
+current-context: example-context
+clusters:
+- cluster:
+    server: https://your-kubernetes-api-server:6443
+  name: example-cluster
+users:
+- name: example-user
+  user:
+    # Add your authentication config here
+""")
+            
+            # Create tools directory with instructions
+            tools_readme = self.k8s_path / "tools" / "README.md"
+            tools_readme.write_text("""# Tools Directory
+
+Place your kubectl and helm binaries here, or ensure they're in your system PATH.
+
+## Option 1: System PATH (Recommended)
+- Install kubectl and helm normally on your system
+- Clusterm will find them automatically
+
+## Option 2: Local Tools
+- Download kubectl binary and place as: `kubectl`
+- Download helm binary and place as: `helm`
+- Make sure they're executable: `chmod +x kubectl helm`
+
+## Downloads:
+- kubectl: https://kubernetes.io/docs/tasks/tools/install-kubectl/
+- helm: https://helm.sh/docs/intro/install/
+""")
+            
+            # Create example helm chart
+            example_chart = self.helm_charts_path / "example-app"
+            example_chart.mkdir(exist_ok=True)
+            
+            chart_yaml = example_chart / "Chart.yaml"
+            chart_yaml.write_text("""apiVersion: v2
+name: example-app
+description: An example Helm chart for Clusterm
+version: 1.0.0
+appVersion: 1.0.0
+""")
+            
+            values_yaml = example_chart / "values.yaml"
+            values_yaml.write_text("""# Example values file
+replicaCount: 1
+
+image:
+  repository: nginx
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: false
+
+resources: {}
+""")
+            
+            self.logger.info("Created example configuration structure")
+            
+        except Exception as e:
+            self.logger.error(f"Failed to create example structure: {e}")
     
     def _setup_initial_cluster(self):
         """Set up the initial cluster if available"""
