@@ -547,6 +547,112 @@ class MainScreen(Screen):
         modal = ConfigModal(self.selected_chart)
         self.app.push_screen(modal, self._handle_deploy_result)
     
+    # Resource action handlers
+    @on(Button.Pressed, "#describe-pod-btn")
+    def describe_pod(self):
+        """Describe selected pod"""
+        pods_table = self.query_one("#pods-table", DataTable)
+        if pods_table.cursor_row is not None:
+            row_data = pods_table.get_row_at(pods_table.cursor_row)
+            pod_name = str(row_data[0])
+            
+            try:
+                log_panel = self.query_one("#log-panel", LogPanel)
+                log_panel.write_log(f"📋 Describing pod: {pod_name}")
+                
+                description = self.k8s_manager.describe_resource("pod", pod_name, self.current_namespace)
+                
+                # Show description in a modal
+                from .components.modals import LogModal
+                modal = LogModal("Pod Description", description, "yaml")
+                self.app.push_screen(modal)
+                
+            except Exception as e:
+                log_panel = self.query_one("#log-panel", LogPanel)
+                log_panel.write_log(f"❌ Error describing pod: {str(e)}", "ERROR")
+        else:
+            log_panel = self.query_one("#log-panel", LogPanel)
+            log_panel.write_log("Please select a pod first", "ERROR")
+    
+    @on(Button.Pressed, "#pod-logs-btn")
+    def view_pod_logs(self):
+        """View logs for selected pod"""
+        pods_table = self.query_one("#pods-table", DataTable)
+        if pods_table.cursor_row is not None:
+            row_data = pods_table.get_row_at(pods_table.cursor_row)
+            pod_name = str(row_data[0])
+            
+            try:
+                log_panel = self.query_one("#log-panel", LogPanel)
+                log_panel.write_log(f"📜 Getting logs for pod: {pod_name}")
+                
+                logs = self.k8s_manager.get_pod_logs(pod_name, self.current_namespace)
+                
+                # Show logs in a modal
+                from .components.modals import LogModal
+                modal = LogModal("Pod Logs", logs, "log")
+                self.app.push_screen(modal)
+                
+            except Exception as e:
+                log_panel = self.query_one("#log-panel", LogPanel)
+                log_panel.write_log(f"❌ Error getting pod logs: {str(e)}", "ERROR")
+        else:
+            log_panel = self.query_one("#log-panel", LogPanel)
+            log_panel.write_log("Please select a pod first", "ERROR")
+    
+    @on(Button.Pressed, "#describe-service-btn")
+    def describe_service(self):
+        """Describe selected service"""
+        services_table = self.query_one("#services-table", DataTable)
+        if services_table.cursor_row is not None:
+            row_data = services_table.get_row_at(services_table.cursor_row)
+            service_name = str(row_data[0])
+            
+            try:
+                log_panel = self.query_one("#log-panel", LogPanel)
+                log_panel.write_log(f"📋 Describing service: {service_name}")
+                
+                description = self.k8s_manager.describe_resource("service", service_name, self.current_namespace)
+                
+                # Show description in a modal
+                from .components.modals import LogModal
+                modal = LogModal("Service Description", description, "yaml")
+                self.app.push_screen(modal)
+                
+            except Exception as e:
+                log_panel = self.query_one("#log-panel", LogPanel)
+                log_panel.write_log(f"❌ Error describing service: {str(e)}", "ERROR")
+        else:
+            log_panel = self.query_one("#log-panel", LogPanel)
+            log_panel.write_log("Please select a service first", "ERROR")
+    
+    @on(Button.Pressed, "#deployment-logs-btn")
+    def view_deployment_logs(self):
+        """View logs for selected deployment"""
+        deployments_table = self.query_one("#deployments-table", DataTable)
+        if deployments_table.cursor_row is not None:
+            row_data = deployments_table.get_row_at(deployments_table.cursor_row)
+            deployment_name = str(row_data[0])
+            
+            try:
+                log_panel = self.query_one("#log-panel", LogPanel)
+                log_panel.write_log(f"📜 Getting logs for deployment: {deployment_name}")
+                
+                # For deployments, we'll describe it since logs are from pods
+                description = self.k8s_manager.describe_resource("deployment", deployment_name, self.current_namespace)
+                
+                # Show description in a modal
+                from .components.modals import LogModal
+                modal = LogModal("Deployment Details", description, "yaml")
+                self.app.push_screen(modal)
+                
+            except Exception as e:
+                log_panel = self.query_one("#log-panel", LogPanel)
+                log_panel.write_log(f"❌ Error getting deployment details: {str(e)}", "ERROR")
+        else:
+            log_panel = self.query_one("#log-panel", LogPanel)
+            log_panel.write_log("Please select a deployment first", "ERROR")
+    
     def _handle_command_result(self, result):
         """Handle command execution result"""
         if not result or result[0] == "cancel":
