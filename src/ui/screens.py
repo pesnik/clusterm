@@ -201,32 +201,42 @@ class MainScreen(Screen):
     def _refresh_all_data(self):
         """Refresh all resource data"""
         try:
+            log_panel = self.query_one("#log-panel", LogPanel)
+            
             if not self.tables:
                 return  # Tables not set up yet
                 
+            log_panel.write_log(f"🔄 Starting data refresh for namespace: {self.current_namespace}")
+            
             # Refresh deployments for current namespace
+            log_panel.write_log("📦 Executing: kubectl get deployments")
             deployments = self.k8s_manager.get_deployments(self.current_namespace)
             self._update_deployments_table(deployments)
             
             # Refresh pods
+            log_panel.write_log("🔧 Executing: kubectl get pods")
             pods = self.k8s_manager.get_pods(self.current_namespace)
             self._update_pods_table(pods)
             
             # Refresh services
+            log_panel.write_log("🌐 Executing: kubectl get services")
             services = self.k8s_manager.get_services(self.current_namespace)
             self._update_services_table(services)
             
             # Refresh helm releases
+            log_panel.write_log("⛵ Executing: helm list")
             helm_releases = self.k8s_manager.get_helm_releases()
             self._update_helm_table(helm_releases)
             
             # Refresh namespaces
+            log_panel.write_log("📂 Executing: kubectl get namespaces")
             namespaces = self.k8s_manager.get_namespaces()
             self._update_namespaces_table(namespaces)
             
             try:
                 log_panel = self.query_one("#log-panel", LogPanel)
-                log_panel.write_log("Data refreshed successfully")
+                log_panel.write_log(f"✅ Data refreshed successfully for namespace: {self.current_namespace}")
+                log_panel.write_log(f"📊 Resource counts - Deployments: {len(deployments)}, Pods: {len(pods)}, Services: {len(services)}")
             except:
                 pass
             
@@ -444,36 +454,55 @@ class MainScreen(Screen):
         
         if message.change_type == "cluster":
             # Cluster changed - refresh everything
+            log_panel.write_log(f"🔄 Cluster changed to: {message.cluster}")
             self.current_namespace = message.namespace
             self._update_command_history_context()
             self._refresh_command_pad()
+            log_panel.write_log("🔄 Refreshing all resources for new cluster...")
             self._refresh_all_data()
             self._update_status_panel()
             
-            log_panel.write_log(f"Switched to cluster: {message.cluster}")
+            log_panel.write_log(f"✅ Successfully switched to cluster: {message.cluster}")
             
         elif message.change_type == "namespace":
             # Namespace changed - refresh namespace-specific resources
+            log_panel.write_log(f"📂 Namespace changed to: {message.namespace}")
             self.current_namespace = message.namespace
             self._update_command_history_context()
             self._refresh_command_pad()
+            log_panel.write_log("🔄 Refreshing namespace-specific resources...")
             self._refresh_namespace_specific_data()
             
-            log_panel.write_log(f"Switched to namespace: {message.namespace}")
+            log_panel.write_log(f"✅ Successfully switched to namespace: {message.namespace}")
     
     def _refresh_namespace_specific_data(self):
         """Refresh data that depends on namespace"""
-        # Update pods
-        pods = self.k8s_manager.get_pods(self.current_namespace)
-        self._update_pods_table(pods)
-        
-        # Update services
-        services = self.k8s_manager.get_services(self.current_namespace)
-        self._update_services_table(services)
-        
-        # Update deployments for current namespace
-        deployments = self.k8s_manager.get_deployments(self.current_namespace)
-        self._update_deployments_table(deployments)
+        try:
+            log_panel = self.query_one("#log-panel", LogPanel)
+            
+            # Update pods
+            log_panel.write_log(f"🔧 Fetching pods for namespace: {self.current_namespace}")
+            pods = self.k8s_manager.get_pods(self.current_namespace)
+            self._update_pods_table(pods)
+            
+            # Update services
+            log_panel.write_log(f"🌐 Fetching services for namespace: {self.current_namespace}")
+            services = self.k8s_manager.get_services(self.current_namespace)
+            self._update_services_table(services)
+            
+            # Update deployments for current namespace
+            log_panel.write_log(f"📦 Fetching deployments for namespace: {self.current_namespace}")
+            deployments = self.k8s_manager.get_deployments(self.current_namespace)
+            self._update_deployments_table(deployments)
+            
+            log_panel.write_log(f"📊 Found {len(pods)} pods, {len(services)} services, {len(deployments)} deployments")
+            
+        except Exception as e:
+            try:
+                log_panel = self.query_one("#log-panel", LogPanel)
+                log_panel.write_log(f"❌ Error refreshing namespace data: {str(e)}", "ERROR")
+            except:
+                pass
 
     # Button handlers
     
