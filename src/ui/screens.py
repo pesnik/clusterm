@@ -16,6 +16,7 @@ from .components.tables import (
 from .components.panels import LogPanel, StatusPanel
 from .components.modals import CommandModal, ConfigModal, LogModal, ClusterSwitchModal
 from .components.command_pad import CommandPad
+from .components.intelligent_command_input import IntelligentCommandInput
 
 
 class MainScreen(Screen):
@@ -105,6 +106,13 @@ class MainScreen(Screen):
                     
                     with TabPane("Command Pad", id="command-pad-tab"):
                         yield CommandPad(self.command_history, id="command-pad")
+                    
+                    with TabPane("Smart Input", id="smart-input-tab"):
+                        yield IntelligentCommandInput(
+                            self.command_history, 
+                            self.k8s_manager,
+                            id="intelligent-input"
+                        )
             
             # Bottom panel - Logs
             yield LogPanel(id="log-panel")
@@ -601,5 +609,42 @@ class MainScreen(Screen):
                 self.app.push_screen(modal)
         else:
             log_panel.write_log(f"Command failed: {output}", "ERROR")
+        
+        self._refresh_all_data()
+    
+    @on(IntelligentCommandInput.CommandEntered)
+    def handle_intelligent_command(self, message):
+        """Handle command from intelligent input"""
+        # Update command history context
+        self._update_command_history_context()
+        
+        log_panel = self.query_one("#log-panel", LogPanel)
+        full_command = message.command
+        cmd_type = message.command_type
+        
+        # Parse command to remove prefix
+        if full_command.lower().startswith(cmd_type.lower()):
+            cmd_args = full_command[len(cmd_type):].strip()
+        else:
+            cmd_args = full_command
+        
+        log_panel.write_log(f"🧠 Intelligent execution: {full_command}")
+        
+        if cmd_type == "kubectl":
+            success, output = self.k8s_manager.command_executor.execute_kubectl(cmd_args.split())
+        else:
+            success, output = self.k8s_manager.command_executor.execute_helm(cmd_args.split())
+        
+        if success:
+            # Add to command history
+            self.command_history.add_command(full_command)
+            # Refresh command pad
+            self._refresh_command_pad()
+            log_panel.write_log("✅ Smart command executed successfully")
+            if output.strip():
+                modal = LogModal(f"🧠 {cmd_type.title()} Smart Output", output)
+                self.app.push_screen(modal)
+        else:
+            log_panel.write_log(f"❌ Smart command failed: {output}", "ERROR")
         
         self._refresh_all_data()

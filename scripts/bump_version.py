@@ -9,22 +9,20 @@ from pathlib import Path
 from typing import Tuple
 
 def get_current_version() -> Tuple[int, int, int]:
-    """Get current version from __version__.py"""
-    version_file = Path(__file__).parent.parent / "src" / "__version__.py"
-    content = version_file.read_text()
+    """Get current version from pyproject.toml"""
+    pyproject_file = Path(__file__).parent.parent / "pyproject.toml"
+    content = pyproject_file.read_text()
     
-    # Extract version info
-    major_match = re.search(r'MAJOR = (\d+)', content)
-    minor_match = re.search(r'MINOR = (\d+)', content)  
-    patch_match = re.search(r'PATCH = (\d+)', content)
+    # Extract version from pyproject.toml
+    version_match = re.search(r'version = "(\d+)\.(\d+)\.(\d+)"', content)
     
-    if not all([major_match, minor_match, patch_match]):
-        raise ValueError("Could not parse version from __version__.py")
+    if not version_match:
+        raise ValueError("Could not parse version from pyproject.toml")
     
     return (
-        int(major_match.group(1)),
-        int(minor_match.group(1)), 
-        int(patch_match.group(1))
+        int(version_match.group(1)),
+        int(version_match.group(2)), 
+        int(version_match.group(3))
     )
 
 def bump_version(version_type: str) -> Tuple[int, int, int]:
@@ -45,20 +43,33 @@ def bump_version(version_type: str) -> Tuple[int, int, int]:
     
     return major, minor, patch
 
-def update_version_file(major: int, minor: int, patch: int):
-    """Update the __version__.py file with new version"""
+def update_version_files(major: int, minor: int, patch: int):
+    """Update version in both pyproject.toml and __version__.py"""
+    new_version = f"{major}.{minor}.{patch}"
+    
+    # Update pyproject.toml
+    pyproject_file = Path(__file__).parent.parent / "pyproject.toml"
+    pyproject_content = pyproject_file.read_text()
+    pyproject_content = re.sub(
+        r'version = "\d+\.\d+\.\d+"', 
+        f'version = "{new_version}"', 
+        pyproject_content
+    )
+    pyproject_file.write_text(pyproject_content)
+    
+    # Update __version__.py
     version_file = Path(__file__).parent.parent / "src" / "__version__.py"
-    content = version_file.read_text()
+    version_content = version_file.read_text()
     
-    # Update version components
-    content = re.sub(r'__version__ = "[^"]*"', f'__version__ = "{major}.{minor}.{patch}"', content)
-    content = re.sub(r'__version_info__ = \([^)]*\)', f'__version_info__ = ({major}, {minor}, {patch})', content)
-    content = re.sub(r'MAJOR = \d+', f'MAJOR = {major}', content)
-    content = re.sub(r'MINOR = \d+', f'MINOR = {minor}', content)
-    content = re.sub(r'PATCH = \d+', f'PATCH = {patch}', content)
-    content = re.sub(r'VERSION_STRING = f"[^"]*"', f'VERSION_STRING = f"{major}.{minor}.{patch}"', content)
+    # Update all version references
+    version_content = re.sub(r'__version__ = "[^"]*"', f'__version__ = "{new_version}"', version_content)
+    version_content = re.sub(r'__version_info__ = \([^)]*\)', f'__version_info__ = ({major}, {minor}, {patch})', version_content)
+    version_content = re.sub(r'MAJOR = \d+', f'MAJOR = {major}', version_content)
+    version_content = re.sub(r'MINOR = \d+', f'MINOR = {minor}', version_content)
+    version_content = re.sub(r'PATCH = \d+', f'PATCH = {patch}', version_content)
+    version_content = re.sub(r'VERSION_STRING = f"[^"]*"', f'VERSION_STRING = f"{new_version}"', version_content)
     
-    version_file.write_text(content)
+    version_file.write_text(version_content)
 
 def main():
     """Main entry point"""
@@ -81,7 +92,7 @@ def main():
             print("Version bump cancelled")
             sys.exit(0)
         
-        update_version_file(new_major, new_minor, new_patch)
+        update_version_files(new_major, new_minor, new_patch)
         print(f"✅ Version bumped to {new_major}.{new_minor}.{new_patch}")
         print("\nNext steps:")
         print("1. Update CHANGELOG.md with release notes")

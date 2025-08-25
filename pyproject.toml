@@ -1,12 +1,13 @@
 [project]
 name = "clusterm"
-dynamic = ["version"]
+version = "0.2.0"
 description = "Clusterm - A modular, extensible TUI for Kubernetes deployment management"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "pyyaml>=6.0.2",
     "textual>=0.70.0",
+    "prompt-toolkit>=3.0.50",
 ]
 
 [project.optional-dependencies]
@@ -25,8 +26,6 @@ clusterm = "main:main"
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools.dynamic]
-version = {attr = "src.__version__.__version__"}
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

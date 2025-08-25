@@ -1,7 +1,7 @@
 """
-ClusterM - Kubernetes Deployment Manager TUI
+Clusterm - Kubernetes Deployment Manager TUI
 A modular, extensible interface for managing Kubernetes deployments
 """
 
-__version__ = "0.1.0"
-__author__ = "ClusterM Team"
+from .__version__ import __version__
+__author__ = "Clusterm Team"

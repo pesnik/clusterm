@@ -13,6 +13,7 @@ from ..core.command_history import CommandHistoryManager
 from ..k8s.manager import K8sManager
 from ..plugins.manager import PluginManager
 from .screens import MainScreen
+from .components.intelligent_command_input import IntelligentCommandInput
 
 
 class ClustermApp(App):
@@ -275,6 +276,103 @@ class ClustermApp(App):
         margin: 0 1;
         min-width: 12;
     }
+    
+    /* Enhanced Command Input */
+    .enhanced-command-input {
+        height: auto;
+        padding: 1;
+        border: solid $primary;
+        margin: 1;
+    }
+    
+    .input-title {
+        text-align: center;
+        color: $primary;
+        text-style: bold;
+        height: 1;
+        margin-bottom: 1;
+    }
+    
+    .input-area {
+        height: auto;
+        margin-bottom: 1;
+    }
+    
+    .input-area Input {
+        height: 3;
+        margin-bottom: 1;
+    }
+    
+    .suggestions {
+        height: 2;
+        background: $surface-lighten-1;
+        border: solid $secondary;
+        padding: 0 1;
+    }
+    
+    .suggestions Static {
+        color: $text-muted;
+        text-style: italic;
+    }
+    
+    .validation {
+        height: 2;
+        background: $surface-darken-1;
+        border: solid $accent;
+        padding: 0 1;
+        margin-top: 1;
+    }
+    
+    .validation Static {
+        color: $warning;
+        text-style: bold;
+    }
+    
+    .input-buttons {
+        height: 3;
+        align: center middle;
+    }
+    
+    .input-buttons Button {
+        margin: 0 1;
+        min-width: 12;
+    }
+    
+    /* Intelligent Command Input */
+    .intelligent-command-input {
+        height: auto;
+        padding: 1;
+        border: solid $success;
+        margin: 1;
+        background: $surface-lighten-1;
+    }
+    
+    .intelligent-command-input .input-title {
+        text-align: center;
+        color: $success;
+        text-style: bold;
+        height: 1;
+        margin-bottom: 1;
+    }
+    
+    .input-hint {
+        text-align: center;
+        color: $text-muted;
+        text-style: italic;
+        height: 1;
+        margin-bottom: 1;
+    }
+    
+    .intelligent-command-input .input-buttons {
+        height: 3;
+        align: center middle;
+        margin-top: 1;
+    }
+    
+    .intelligent-command-input .input-buttons Button {
+        margin: 0 1;
+        min-width: 16;
+    }
     """
     
     BINDINGS = [
@@ -283,6 +381,7 @@ class ClustermApp(App):
         Binding("c", "switch_cluster", "Switch Cluster"),
         Binding("t", "test_connection", "Test Connection"),
         Binding("x", "execute_command", "Execute Command"),
+        Binding("ctrl+i", "smart_input", "🧠 Smart Input"),
         Binding("d", "deploy", "Deploy Chart"),
         Binding("ctrl+l", "clear_logs", "Clear Logs"),
         Binding("escape", "cancel_modal", "Cancel", show=False),
@@ -362,6 +461,16 @@ class ClustermApp(App):
         """Execute command"""
         if self.main_screen:
             self.main_screen.execute_command()
+    
+    def action_smart_input(self):
+        """Launch smart input"""
+        if self.main_screen:
+            try:
+                smart_input = self.main_screen.query_one("#intelligent-input", IntelligentCommandInput)
+                smart_input.action_launch_intelligent_input()
+            except Exception:
+                # Fallback to regular execute command
+                self.main_screen.execute_command()
     
     def action_deploy(self):
         """Deploy chart"""
