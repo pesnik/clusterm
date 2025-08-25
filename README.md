@@ -8,6 +8,7 @@ A robust, modular, and extensible Terminal User Interface (TUI) application for 
 - **Multi-Cluster Management**: Switch between multiple Kubernetes clusters seamlessly
 - **Resource Monitoring**: Real-time viewing of deployments, pods, services, and namespaces
 - **Helm Integration**: Deploy and manage Helm charts with interactive configuration
+- **Intelligent Command Input**: Production-grade prompt_toolkit integration with real-time auto-completion
 - **Smart Command Execution**: Execute kubectl and helm commands with auto-detection
 - **Command Pad**: Context-aware command history that learns from your usage patterns
 - **Log Viewing**: Access pod logs and command output in dedicated viewers
@@ -27,6 +28,11 @@ A robust, modular, and extensible Terminal User Interface (TUI) application for 
 - kubectl binary
 - helm binary (optional, for Helm functionality)
 
+### Dependencies
+- **textual**: Modern TUI framework
+- **prompt-toolkit**: Advanced command-line interface
+- **pyyaml**: YAML configuration support
+
 ### Install Dependencies
 
 Using uv (recommended):
@@ -44,6 +50,18 @@ For development:
 pip install -e .[dev]
 ```
 
+### Quick Demo
+
+Try the intelligent command input features:
+
+```bash
+# Run the interactive demo
+python examples/intelligent_input_demo.py
+
+# Or launch Clusterm and press Ctrl+I for Smart Input
+python main.py
+```
+
 ## Project Structure
 
 ```
@@ -54,7 +72,8 @@ clusterm/
 │   │   ├── events.py        # Event system
 │   │   ├── exceptions.py    # Custom exceptions
 │   │   ├── logger.py        # Logging infrastructure
-│   │   └── command_history.py # Command pad functionality
+│   │   ├── command_history.py # Command pad functionality
+│   │   └── live_completions.py # Real-time completion provider
 │   ├── k8s/                 # Kubernetes operations
 │   │   ├── manager.py       # Main K8s manager
 │   │   ├── cluster.py       # Cluster management
@@ -71,7 +90,11 @@ clusterm/
 │           ├── tables.py    # Resource tables
 │           ├── panels.py    # UI panels
 │           ├── modals.py    # Modal dialogs
-│           └── command_pad.py # Command pad component
+│           ├── command_pad.py # Command pad component
+│           ├── intelligent_command_input.py # Smart input widget
+│           └── enhanced_command_input.py # Enhanced command utilities
+├── examples/                # Demo and example scripts
+│   └── intelligent_input_demo.py # Interactive demo of smart input
 ├── tests/                   # Test suite
 ├── main.py                  # Application entry point
 └── pyproject.toml          # Project configuration
@@ -98,6 +121,7 @@ python main.py /path/to/config.yaml
 - `c` - Switch cluster
 - `t` - Test cluster connection
 - `x` - Execute command (with smart auto-detection)
+- `Ctrl+I` - Open intelligent command input (Smart Input tab)
 - `d` - Deploy selected chart
 - `Ctrl+L` - Clear logs
 
@@ -117,6 +141,40 @@ The **Command Pad** is a revolutionary feature that learns from your kubectl and
 - ✅ **Learn Your Patterns**: Commands adapt to your actual workflow
 - ✅ **Save Time**: No more retyping complex commands
 - ✅ **Context Switching**: Separate command histories for different environments
+
+### Intelligent Command Input
+
+The **Smart Input** feature provides a production-grade command-line experience with advanced auto-completion:
+
+**🧠 Key Features:**
+- **Real-time Auto-completion**: Live suggestions based on current cluster state
+- **Context-Aware Completions**: Resource names, namespaces, and options from your actual cluster
+- **Syntax Highlighting**: Color-coded commands for better readability
+- **Command History Navigation**: Use ↑/↓ arrows to browse previous commands
+- **Real-time Validation**: Instant feedback on command syntax and validity
+- **Background Data Fetching**: Non-blocking updates of cluster resources (30s cache)
+- **Hybrid Architecture**: Seamlessly integrated with Textual UI
+
+**🚀 Supported Completions:**
+- **kubectl**: All resources, namespaces, pod names, service names, output formats
+- **helm**: Release names, chart repositories, common flags and values
+- **Field Selectors**: metadata.name, status.phase, spec.nodeName, etc.
+- **Output Formats**: json, yaml, wide, custom-columns, go-template
+- **Common Flags**: --namespace, --all-namespaces, --watch, --follow
+
+**💡 Usage:**
+1. Press `Ctrl+I` or navigate to "Smart Input" tab
+2. Start typing any kubectl or helm command
+3. Use Tab for completions, ↑/↓ for history
+4. Press Enter to execute the command
+5. Results appear in the main interface
+
+**Benefits:**
+- ✅ **Production-Grade**: Built on prompt_toolkit with robust error handling
+- ✅ **Live Data**: Completions reflect your actual cluster state
+- ✅ **Non-blocking**: Background updates don't interrupt your workflow
+- ✅ **Smart Caching**: Efficient resource fetching with TTL-based refresh
+- ✅ **Graceful Degradation**: Works even when cluster is unreachable
 
 ### Directory Structure
 
@@ -331,15 +389,21 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## Roadmap
 
-### Version 0.2.0
+### Version 0.2.0 ✅ Released
 - [x] **Command Pad** - Context-aware command history and reuse
 - [x] **Smart Command Execution** - Auto-detection of kubectl/helm commands
+
+### Version 0.3.0 ✅ Released
+- [x] **Intelligent Command Input** - Production-grade prompt_toolkit integration
+- [x] **Real-time Auto-completion** - Live cluster data with smart caching
+- [x] **Context-Aware Completions** - Resource names and command suggestions
+- [x] **Syntax Highlighting & Validation** - Enhanced command experience
+
+### Version 0.4.0 (Planned)
 - [ ] Resource editing capabilities
 - [ ] Custom resource definitions (CRDs) support
 - [ ] Enhanced filtering and searching
 - [ ] Metrics and monitoring integration
-
-### Version 0.3.0
 - [ ] Multi-context support
 - [ ] Backup and restore functionality
 - [ ] Advanced Helm operations
