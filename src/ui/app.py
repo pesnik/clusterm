@@ -149,8 +149,26 @@ class ClustermApp(App):
         height: 30;
     }
     
+    .tab-actions {
+        height: 3;
+        align: center middle;
+        margin-top: 1;
+        margin-bottom: 1;
+        padding: 0 1;
+    }
+    
     .tab-actions Button {
         margin: 0 1;
+        min-width: 12;
+        height: 3;
+        background: $surface-lighten-1;
+        color: $text;
+        border: solid $primary;
+    }
+    
+    .tab-actions Button:hover {
+        background: $primary;
+        color: $text-on-primary;
     }
     
     /* Log panel */

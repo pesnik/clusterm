@@ -103,6 +103,9 @@ class MainScreen(Screen):
                     
                     with TabPane("Namespaces", id="namespaces-tab"):
                         yield DataTable(id="namespaces-table")
+                        
+                        with Horizontal(classes="tab-actions"):
+                            yield Button("Describe", id="describe-namespace-btn")
                     
                     with TabPane("Command Pad", id="command-pad-tab"):
                         yield CommandPad(self.command_history, id="command-pad")
@@ -221,7 +224,7 @@ class MainScreen(Screen):
             self._update_services_table(services)
             
             # Refresh helm releases
-            helm_releases = self.k8s_manager.get_helm_releases()
+            helm_releases = self.k8s_manager.get_helm_releases(self.current_namespace)
             self._update_helm_table(helm_releases)
             
             # Refresh namespaces
@@ -625,6 +628,32 @@ class MainScreen(Screen):
         else:
             log_panel = self.query_one("#log-panel", LogPanel)
             log_panel.write_log("Please select a service first", "ERROR")
+    
+    @on(Button.Pressed, "#describe-namespace-btn")
+    def describe_namespace(self):
+        """Describe selected namespace"""
+        namespaces_table = self.query_one("#namespaces-table", DataTable)
+        if namespaces_table.cursor_row is not None:
+            row_data = namespaces_table.get_row_at(namespaces_table.cursor_row)
+            namespace_name = str(row_data[0])
+            
+            try:
+                log_panel = self.query_one("#log-panel", LogPanel)
+                log_panel.write_log(f"📋 Describing namespace: {namespace_name}")
+                
+                description = self.k8s_manager.describe_resource("namespace", namespace_name)
+                
+                # Show description in a modal
+                from .components.modals import LogModal
+                modal = LogModal("Namespace Description", description, "yaml")
+                self.app.push_screen(modal)
+                
+            except Exception as e:
+                log_panel = self.query_one("#log-panel", LogPanel)
+                log_panel.write_log(f"❌ Error describing namespace: {str(e)}", "ERROR")
+        else:
+            log_panel = self.query_one("#log-panel", LogPanel)
+            log_panel.write_log("Please select a namespace first", "ERROR")
     
     @on(Button.Pressed, "#deployment-logs-btn")
     def view_deployment_logs(self):
