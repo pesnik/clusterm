@@ -158,3 +158,14 @@ class ContextSelector(Vertical):
             "cluster": self.current_cluster,
             "namespace": self.current_namespace
         }
+    
+    def refresh_selectors(self):
+        """Refresh selector values to match current context"""
+        try:
+            cluster_select = self.query_one("#cluster-select", Select)
+            cluster_select.value = self.current_cluster
+            
+            namespace_select = self.query_one("#namespace-select", Select)
+            namespace_select.value = self.current_namespace
+        except Exception:
+            pass

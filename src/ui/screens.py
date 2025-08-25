@@ -134,6 +134,17 @@ class MainScreen(Screen):
                 pass
         
         self.call_after_refresh(log_startup)
+        
+        # Sync context selector with initial state
+        def sync_context_selector():
+            try:
+                context_selector = self.query_one("#context-selector", ContextSelector)
+                context_selector.current_namespace = self.current_namespace
+                context_selector.refresh_selectors()
+            except Exception:
+                pass
+        
+        self.call_after_refresh(sync_context_selector)
     
     def _setup_charts_table(self):
         """Setup the Helm charts table"""
@@ -193,8 +204,8 @@ class MainScreen(Screen):
             if not self.tables:
                 return  # Tables not set up yet
                 
-            # Refresh deployments
-            deployments = self.k8s_manager.get_deployments()
+            # Refresh deployments for current namespace
+            deployments = self.k8s_manager.get_deployments(self.current_namespace)
             self._update_deployments_table(deployments)
             
             # Refresh pods
@@ -429,14 +440,25 @@ class MainScreen(Screen):
     @on(ContextSelector.ContextChanged)
     def handle_context_change(self, message):
         """Handle context changes from ContextSelector"""
+        log_panel = self.query_one("#log-panel", LogPanel)
+        
         if message.change_type == "cluster":
+            # Cluster changed - refresh everything
             self.current_namespace = message.namespace
-            log_panel = self.query_one("#log-panel", LogPanel)
+            self._update_command_history_context()
+            self._refresh_command_pad()
+            self._refresh_all_data()
+            self._update_status_panel()
+            
             log_panel.write_log(f"Switched to cluster: {message.cluster}")
             
         elif message.change_type == "namespace":
+            # Namespace changed - refresh namespace-specific resources
             self.current_namespace = message.namespace
-            log_panel = self.query_one("#log-panel", LogPanel)
+            self._update_command_history_context()
+            self._refresh_command_pad()
+            self._refresh_namespace_specific_data()
+            
             log_panel.write_log(f"Switched to namespace: {message.namespace}")
     
     def _refresh_namespace_specific_data(self):
