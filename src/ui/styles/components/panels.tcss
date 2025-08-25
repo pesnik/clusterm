@@ -1,0 +1,79 @@
+/* Panel Components */
+
+/* Local Tokens */
+$spacing-xs: 1;
+$sidebar-width: 30%;
+$main-width: 70%;
+$panel-height-md: 8;
+$button-height: 3;
+
+/* Charts Panel */
+#charts-panel {
+    width: $sidebar-width;
+    height: 100%;
+}
+
+#resources-tabs {
+    width: $main-width;
+    height: 100%;
+}
+
+.charts-section {
+    height: 1fr;
+}
+
+.section-title {
+    text-style: bold;
+    color: $primary;
+    margin-bottom: $spacing-xs;
+    text-align: center;
+}
+
+/* Log Panel */
+#log-panel {
+    height: $panel-height-md;
+    dock: bottom;
+    margin-top: $spacing-xs;
+}
+
+.log-panel-title {
+    text-align: center;
+    color: $primary;
+    text-style: bold;
+    height: 1;
+    margin-bottom: $spacing-xs;
+}
+
+/* Command Pad */
+.command-pad {
+    height: 100%;
+    padding: $spacing-xs;
+}
+
+.command-pad-title {
+    text-align: center;
+    color: $primary;
+    text-style: bold;
+    height: 1;
+    margin-bottom: $spacing-xs;
+}
+
+.command-pad-controls {
+    height: $button-height;
+    align: center middle;
+    margin-bottom: $spacing-xs;
+}
+
+.command-pad-controls Select {
+    width: 50%;
+    margin-right: $spacing-xs;
+}
+
+.command-pad-controls Input {
+    width: 50%;
+}
+
+.commands-table {
+    height: 1fr;
+    margin-bottom: $spacing-xs;
+}

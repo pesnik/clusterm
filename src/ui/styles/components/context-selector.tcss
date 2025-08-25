@@ -1,0 +1,55 @@
+/* Context Selector Component */
+
+/* Local Tokens */
+$spacing-xs: 1;
+$border-primary: solid $primary;
+
+.context-selector {
+    border: $border-primary;
+    margin: 0 0 $spacing-xs 0;
+    padding: $spacing-xs;
+    background: $surface;
+    height: auto;
+}
+
+.context-title {
+    text-style: bold;
+    color: $primary;
+    text-align: center;
+    margin-bottom: $spacing-xs;
+}
+
+.context-selectors {
+    height: auto;
+}
+
+.selector-group {
+    width: 50%;
+    margin: 0 $spacing-xs;
+}
+
+.selector-label {
+    color: $primary;
+    text-style: bold;
+    margin-bottom: $spacing-xs;
+}
+
+.cluster-select,
+.namespace-select {
+    width: 100%;
+}
+
+.current-cluster {
+    text-style: bold;
+    color: $success;
+    margin-bottom: $spacing-xs;
+    height: 1;
+}
+
+.auto-detect-info {
+    color: $text-muted;
+    text-style: italic;
+    margin-top: $spacing-xs;
+    height: 1;
+    text-align: center;
+}

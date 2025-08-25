@@ -1,0 +1,48 @@
+/* Base Styles */
+
+/* Local Tokens */
+$spacing-xs: 1;
+$spacing-md: 3;
+$panel-height-xl: 30;
+$border-primary: solid $primary;
+
+/* Global Layout */
+.panel {
+    border: $border-primary;
+    margin: $spacing-xs;
+    padding: $spacing-xs;
+}
+
+/* Main Layout Structure */
+#main-container {
+    height: 100%;
+    layout: vertical;
+}
+
+#top-panel {
+    height: auto;
+    layout: horizontal;
+}
+
+#main-content {
+    height: 1fr;
+    layout: horizontal;
+}
+
+/* Common Input Elements */
+Input {
+    margin-bottom: $spacing-xs;
+}
+
+Select {
+    margin-bottom: $spacing-xs;
+}
+
+Switch {
+    margin-bottom: $spacing-xs;
+}
+
+/* Tables */
+DataTable {
+    height: $panel-height-xl;
+}

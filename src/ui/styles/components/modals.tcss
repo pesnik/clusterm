@@ -1,0 +1,43 @@
+/* Modal Components */
+
+/* Local Tokens */
+$spacing-xs: 1;
+$modal-width: 60;
+$modal-width-lg: 80%;
+$panel-height-lg: 20;
+$border-primary: solid $primary;
+
+ModalScreen {
+    align: center middle;
+}
+
+.modal {
+    align: center middle;
+    width: $modal-width;
+    height: auto;
+    min-height: $panel-height-lg;
+    max-height: 80%;
+    background: $surface;
+    border: $border-primary;
+    padding: $spacing-xs;
+    margin: 0;
+}
+
+.modal.large-modal {
+    width: $modal-width-lg;
+    height: 80%;
+}
+
+.modal-title {
+    text-align: center;
+    color: $primary;
+    text-style: bold;
+    height: 1;
+    margin-bottom: $spacing-xs;
+}
+
+.modal-content {
+    height: auto;
+    padding: $spacing-xs;
+    margin-bottom: $spacing-xs;
+}

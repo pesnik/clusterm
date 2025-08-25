@@ -1,0 +1,33 @@
+/* Status Panel Component */
+
+/* Local Tokens */
+$spacing-xs: 1;
+$spacing-md: 3;
+$panel-height-sm: 3;
+
+#status-panel {
+    height: $panel-height-sm;
+    dock: top;
+    margin-bottom: $spacing-xs;
+    background: $surface;
+}
+
+.status-label {
+    color: $text-muted;
+    width: auto;
+    margin-right: $spacing-xs;
+}
+
+.status-value {
+    color: $text;
+    width: auto;
+    margin-right: $spacing-md;
+}
+
+.status-value.connected {
+    color: $success;
+}
+
+.status-value.disconnected {
+    color: $error;
+}

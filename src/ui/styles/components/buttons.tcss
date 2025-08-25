@@ -1,0 +1,99 @@
+/* Button Components */
+
+/* Local Tokens */
+$spacing-xs: 1;
+$button-height: 3;
+$button-min-width: 12;
+$button-min-width-lg: 16;
+$border-primary: solid $primary;
+
+/* Action Buttons */
+.action-buttons {
+    margin-bottom: $spacing-xs;
+}
+
+.action-btn {
+    width: 100%;
+    margin: 0 0 $spacing-xs 0;
+    height: $button-height;
+}
+
+.deploy-btn {
+    width: 100%;
+    margin-top: $spacing-xs;
+    height: $button-height;
+}
+
+/* Tab Action Buttons */
+.tab-actions {
+    height: $button-height;
+    align: center middle;
+    margin-top: $spacing-xs;
+    margin-bottom: $spacing-xs;
+    padding: 0 $spacing-xs;
+}
+
+.tab-actions Button {
+    margin: 0 $spacing-xs;
+    min-width: $button-min-width;
+    height: $button-height;
+    background: $surface-lighten-1;
+    color: $text;
+    border: $border-primary;
+}
+
+.tab-actions Button:hover {
+    background: $primary;
+    color: $text-primary;
+}
+
+/* Modal Buttons */
+.modal-buttons {
+    align: center middle;
+    height: $button-height;
+    width: 100%;
+    margin-top: $spacing-xs;
+}
+
+.modal-buttons Button {
+    margin: 0 $spacing-xs;
+    min-width: $button-min-width-lg;
+}
+
+.modal-close-btn {
+    align: center middle;
+    margin-top: $spacing-xs;
+}
+
+/* Command Pad Buttons */
+.command-pad-buttons {
+    height: $button-height;
+    align: center middle;
+}
+
+.command-pad-buttons Button {
+    margin: 0 $spacing-xs;
+    min-width: $button-min-width;
+}
+
+/* Input Buttons */
+.input-buttons {
+    height: $button-height;
+    align: center middle;
+}
+
+.input-buttons Button {
+    margin: 0 $spacing-xs;
+    min-width: $button-min-width;
+}
+
+.intelligent-command-input .input-buttons {
+    height: $button-height;
+    align: center middle;
+    margin-top: $spacing-xs;
+}
+
+.intelligent-command-input .input-buttons Button {
+    margin: 0 $spacing-xs;
+    min-width: $button-min-width-lg;
+}

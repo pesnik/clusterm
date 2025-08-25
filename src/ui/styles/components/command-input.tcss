@@ -1,0 +1,111 @@
+/* Command Input Components */
+
+/* Local Tokens */
+$spacing-xs: 1;
+$button-height: 3;
+$panel-height-xs: 2;
+$border-primary: solid $primary;
+$border-secondary: solid $secondary;
+$border-accent: solid $accent;
+$border-success: solid $success;
+
+/* Enhanced Command Input */
+.enhanced-command-input {
+    height: auto;
+    padding: $spacing-xs;
+    border: $border-primary;
+    margin: $spacing-xs;
+}
+
+.input-title {
+    text-align: center;
+    color: $primary;
+    text-style: bold;
+    height: 1;
+    margin-bottom: $spacing-xs;
+}
+
+.input-area {
+    height: auto;
+    margin-bottom: $spacing-xs;
+}
+
+.input-area Input {
+    height: $button-height;
+    margin-bottom: $spacing-xs;
+}
+
+.suggestions {
+    height: $panel-height-xs;
+    background: $surface-lighten-1;
+    border: $border-secondary;
+    padding: 0 $spacing-xs;
+}
+
+.suggestions Static {
+    color: $text-muted;
+    text-style: italic;
+}
+
+.validation {
+    height: $panel-height-xs;
+    background: $surface-darken-1;
+    border: $border-accent;
+    padding: 0 $spacing-xs;
+    margin-top: $spacing-xs;
+}
+
+.validation Static {
+    color: $warning;
+    text-style: bold;
+}
+
+/* Intelligent Command Input */
+.intelligent-command-input {
+    height: auto;
+    padding: $spacing-xs;
+    border: $border-success;
+    margin: $spacing-xs;
+    background: $surface-lighten-1;
+}
+
+.intelligent-command-input .input-title {
+    text-align: center;
+    color: $success;
+    text-style: bold;
+    height: 1;
+    margin-bottom: $spacing-xs;
+}
+
+.input-hint {
+    text-align: center;
+    color: $text-muted;
+    text-style: italic;
+    height: 1;
+    margin-bottom: $spacing-xs;
+}
+
+/* Input Labels and Examples */
+.input-label {
+    color: $text;
+    text-style: bold;
+    margin-top: $spacing-xs;
+    margin-bottom: $spacing-xs;
+}
+
+.examples-title {
+    color: $primary;
+    text-style: bold;
+    margin-top: $spacing-xs;
+    margin-bottom: $spacing-xs;
+}
+
+.command-examples {
+    color: $text-muted;
+    text-style: italic;
+    margin-top: $spacing-xs;
+    height: auto;
+    background: $surface-darken-1;
+    padding: $spacing-xs;
+    border-left: $border-primary;
+}
