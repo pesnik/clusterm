@@ -38,11 +38,7 @@ class Logger:
         
         self.logger.setLevel(level)
         
-        # Console handler
-        console_handler = logging.StreamHandler(sys.stdout)
-        console_handler.setLevel(level)
-        
-        # File handler
+        # File handler only - no console output to prevent Textual UI interference
         log_dir = Path.home() / ".clusterm" / "logs"
         log_dir.mkdir(parents=True, exist_ok=True)
         file_handler = logging.FileHandler(log_dir / "clusterm.log")
@@ -52,12 +48,10 @@ class Logger:
         formatter = logging.Formatter(
             '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
         )
-        console_handler.setFormatter(formatter)
         file_handler.setFormatter(formatter)
         
-        # Clear existing handlers and add new ones
+        # Clear existing handlers and add file handler only
         self.logger.handlers.clear()
-        self.logger.addHandler(console_handler)
         self.logger.addHandler(file_handler)
     
     def debug(self, message: str, **kwargs):

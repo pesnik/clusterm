@@ -1098,8 +1098,9 @@ class MainScreen(Screen):
         
         log_panel = self.query_one("#log-panel", LogPanel)
         full_command = f"{cmd_type} {cmd_args}"
-        log_panel.write_log(f"Executing from pad: {full_command}")
+        log_panel.write_log(f"📋 Selected from pad: {full_command}")
         
+        # Execute the command (subprocess should capture all output)
         if cmd_type == "kubectl":
             success, output = self.k8s_manager.command_executor.execute_kubectl(cmd_args.split())
         else:

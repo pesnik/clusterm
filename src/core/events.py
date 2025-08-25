@@ -116,7 +116,8 @@ class EventBus:
                             "event_data": event.data
                         })
                     else:
-                        print(error_msg)
+                        # Never print to stdout in Textual app - it breaks the UI
+                        pass
             
             if self.logger:
                 self.logger.info(f"EventBus.emit: Event {event.type.value} processed by {len(subscribers)} subscribers")

@@ -517,9 +517,6 @@ class CommandInput(Widget):
     
     def compose(self):
         """Compose the intelligent input widget"""
-        if self.logger:
-            self.logger.debug("CommandInput.compose: Creating command input widget layout")
-        
         yield Static("⚡ Command Input", classes="input-title")
         yield Static("Press Ctrl+I to launch command input terminal", classes="input-hint")
         yield Button("⚡ Command Input (Ctrl+I)", variant="primary", id="command-input-btn")

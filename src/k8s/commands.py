@@ -107,7 +107,8 @@ class CommandExecutor:
             
             result = subprocess.run(
                 cmd,
-                capture_output=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
                 text=True,
                 env=env,
                 timeout=timeout,

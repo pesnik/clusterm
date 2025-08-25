@@ -43,20 +43,9 @@ class CommandPad(Widget):
     
     def on_mount(self):
         """Setup the command pad when mounted"""
-        if self.logger:
-            self.logger.debug("CommandPad.on_mount: Starting mount process")
-        
         table = self.query_one("#commands-table", DataTable)
         table.add_columns("Command", "Type", "Uses")
         table.cursor_type = "row"
-        
-        # Force table to have minimum dimensions
-        table.styles.height = "auto"
-        table.styles.min_height = 10
-        
-        if self.logger:
-            self.logger.debug("CommandPad.on_mount: Table setup complete, refreshing commands")
-        
         self._refresh_commands()
     
     
@@ -64,6 +53,7 @@ class CommandPad(Widget):
     def use_command(self):
         """Use selected command"""
         table = self.query_one("#commands-table", DataTable)
+        
         if table.cursor_row is not None:
             commands = self._get_filtered_commands()
             if table.cursor_row < len(commands):
@@ -112,16 +102,10 @@ class CommandPad(Widget):
     
     def _refresh_commands(self):
         """Refresh the commands table"""
-        if self.logger:
-            self.logger.debug("CommandPad._refresh_commands: Starting command refresh")
-        
         table = self.query_one("#commands-table", DataTable)
         table.clear()
         
         commands = self._get_filtered_commands()
-        
-        if self.logger:
-            self.logger.debug(f"CommandPad._refresh_commands: Found {len(commands)} commands")
         
         for cmd in commands:
             table.add_row(
@@ -139,9 +123,6 @@ class CommandPad(Widget):
             delete_btn.disabled = not has_commands
         except Exception:
             pass  # Buttons might not exist yet
-        
-        if self.logger:
-            self.logger.debug(f"CommandPad._refresh_commands: Completed refresh with {len(commands)} commands displayed")
     
     
     def action_refresh(self):
