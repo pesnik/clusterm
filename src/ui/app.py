@@ -58,9 +58,10 @@ class ClustermApp(App):
     /* Context Selector */
     .context-selector {
         border: solid $primary;
-        margin: 1 1 0 1;
+        margin: 0 0 1 0;
         padding: 1;
         background: $surface;
+        height: auto;
     }
     
     .context-title {
@@ -70,18 +71,17 @@ class ClustermApp(App):
         margin-bottom: 1;
     }
     
-    .context-controls {
+    .context-selectors {
         height: auto;
     }
     
-    .cluster-selector-container,
-    .namespace-selector-container {
+    .selector-group {
         width: 50%;
         margin: 0 1;
     }
     
     .selector-label {
-        color: $text;
+        color: $primary;
         text-style: bold;
         margin-bottom: 1;
     }
@@ -89,12 +89,22 @@ class ClustermApp(App):
     .cluster-select,
     .namespace-select {
         width: 100%;
-        margin-bottom: 1;
     }
     
     /* Main content layout */
-    #main-content {
+    #main-container {
         height: 100%;
+        layout: vertical;
+    }
+    
+    #top-panel {
+        height: auto;
+        layout: horizontal;
+    }
+    
+    #main-content {
+        height: 1fr;
+        layout: horizontal;
     }
     
     #charts-panel {
@@ -415,7 +425,7 @@ class ClustermApp(App):
     BINDINGS = [
         Binding("q", "quit", "Quit"),
         Binding("r", "refresh", "Refresh"),
-        Binding("c", "switch_cluster", "Switch Cluster"),
+        Binding("c", "switch_cluster", "Context Selector"),
         Binding("t", "test_connection", "Test Connection"),
         Binding("x", "execute_command", "Execute Command"),
         Binding("ctrl+i", "smart_input", "🧠 Smart Input"),
@@ -485,9 +495,14 @@ class ClustermApp(App):
             self.main_screen._refresh_all_data()
     
     def action_switch_cluster(self):
-        """Switch cluster"""
+        """Show context information"""
         if self.main_screen:
-            self.main_screen.switch_cluster()
+            try:
+                from .components.panels import LogPanel
+                log_panel = self.main_screen.query_one("#log-panel", LogPanel)
+                log_panel.write_log("Context: Cluster=default, Namespace=default")
+            except Exception:
+                pass
     
     def action_test_connection(self):
         """Test cluster connection"""

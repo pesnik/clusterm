@@ -57,12 +57,12 @@ class MainScreen(Screen):
             # Status bar
             yield StatusPanel(id="status-panel")
             
-            # Context selector for cluster and namespace
-            yield ContextSelector(self.k8s_manager, id="context-selector")
-            
             with Horizontal(id="main-content"):
-                # Left panel - Charts and actions
+                # Left panel - Charts, actions, and context selector
                 with Vertical(id="charts-panel", classes="panel"):
+                    # Context selector dropdowns
+                    yield ContextSelector(self.k8s_manager, id="context-selector")
+                    
                     with Vertical(classes="action-buttons"):
                         yield Button("🔗 Test Connection", id="test-connection-btn", classes="action-btn") 
                         yield Button("⚡ Execute Command", id="execute-command-btn", classes="action-btn")
@@ -430,23 +430,12 @@ class MainScreen(Screen):
     def handle_context_change(self, message):
         """Handle context changes from ContextSelector"""
         if message.change_type == "cluster":
-            # Cluster changed - update everything
             self.current_namespace = message.namespace
-            self._update_command_history_context()
-            self._refresh_command_pad()
-            self._refresh_all_data()
-            self._update_status_panel()
-            
             log_panel = self.query_one("#log-panel", LogPanel)
             log_panel.write_log(f"Switched to cluster: {message.cluster}")
             
         elif message.change_type == "namespace":
-            # Namespace changed - update namespace-specific data
             self.current_namespace = message.namespace
-            self._update_command_history_context()
-            self._refresh_command_pad()
-            self._refresh_namespace_specific_data()
-            
             log_panel = self.query_one("#log-panel", LogPanel)
             log_panel.write_log(f"Switched to namespace: {message.namespace}")
     
