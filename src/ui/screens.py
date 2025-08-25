@@ -14,9 +14,10 @@ from .components.tables import (
     HelmReleaseTable, NamespaceTable, ResourceTable
 )
 from .components.panels import LogPanel, StatusPanel
-from .components.modals import CommandModal, ConfigModal, LogModal, ClusterSwitchModal
+from .components.modals import CommandModal, ConfigModal, LogModal
 from .components.command_pad import CommandPad
 from .components.command_input import CommandInput
+from .components.context_selector import ContextSelector
 
 
 class MainScreen(Screen):
@@ -56,11 +57,13 @@ class MainScreen(Screen):
             # Status bar
             yield StatusPanel(id="status-panel")
             
+            # Context selector for cluster and namespace
+            yield ContextSelector(self.k8s_manager, id="context-selector")
+            
             with Horizontal(id="main-content"):
                 # Left panel - Charts and actions
                 with Vertical(id="charts-panel", classes="panel"):
                     with Vertical(classes="action-buttons"):
-                        yield Button("🔄 Switch Cluster", id="switch-cluster-btn", classes="action-btn")
                         yield Button("🔗 Test Connection", id="test-connection-btn", classes="action-btn") 
                         yield Button("⚡ Execute Command", id="execute-command-btn", classes="action-btn")
                     
@@ -100,9 +103,6 @@ class MainScreen(Screen):
                     
                     with TabPane("Namespaces", id="namespaces-tab"):
                         yield DataTable(id="namespaces-table")
-                        
-                        with Horizontal(classes="tab-actions"):
-                            yield Button("Set Active", id="set-namespace-btn")
                     
                     with TabPane("Command Pad", id="command-pad-tab"):
                         yield CommandPad(self.command_history, id="command-pad")
@@ -425,15 +425,46 @@ class MainScreen(Screen):
             self._refresh_command_pad()
             self._refresh_all_data()
     
-    # Button handlers
-    @on(Button.Pressed, "#switch-cluster-btn")
-    def switch_cluster(self):
-        """Handle cluster switching"""
-        clusters = self.k8s_manager.cluster_manager.get_available_clusters()
-        current_cluster = self.k8s_manager.cluster_manager.current_cluster
+    # Context change handler
+    @on(ContextSelector.ContextChanged)
+    def handle_context_change(self, message):
+        """Handle context changes from ContextSelector"""
+        if message.change_type == "cluster":
+            # Cluster changed - update everything
+            self.current_namespace = message.namespace
+            self._update_command_history_context()
+            self._refresh_command_pad()
+            self._refresh_all_data()
+            self._update_status_panel()
+            
+            log_panel = self.query_one("#log-panel", LogPanel)
+            log_panel.write_log(f"Switched to cluster: {message.cluster}")
+            
+        elif message.change_type == "namespace":
+            # Namespace changed - update namespace-specific data
+            self.current_namespace = message.namespace
+            self._update_command_history_context()
+            self._refresh_command_pad()
+            self._refresh_namespace_specific_data()
+            
+            log_panel = self.query_one("#log-panel", LogPanel)
+            log_panel.write_log(f"Switched to namespace: {message.namespace}")
+    
+    def _refresh_namespace_specific_data(self):
+        """Refresh data that depends on namespace"""
+        # Update pods
+        pods = self.k8s_manager.get_pods(self.current_namespace)
+        self._update_pods_table(pods)
         
-        modal = ClusterSwitchModal(clusters, current_cluster)
-        self.app.push_screen(modal, self._handle_cluster_switch_result)
+        # Update services
+        services = self.k8s_manager.get_services(self.current_namespace)
+        self._update_services_table(services)
+        
+        # Update deployments for current namespace
+        deployments = self.k8s_manager.get_deployments(self.current_namespace)
+        self._update_deployments_table(deployments)
+
+    # Button handlers
     
     @on(Button.Pressed, "#test-connection-btn")
     def test_connection(self):
@@ -467,24 +498,6 @@ class MainScreen(Screen):
         
         modal = ConfigModal(self.selected_chart)
         self.app.push_screen(modal, self._handle_deploy_result)
-    
-    def _handle_cluster_switch_result(self, result):
-        """Handle cluster switch modal result"""
-        if not result:
-            return
-        
-        action, cluster_name = result
-        log_panel = self.query_one("#log-panel", LogPanel)
-        
-        if action == "switch" and cluster_name:
-            if self.k8s_manager.cluster_manager.set_current_cluster(cluster_name):
-                log_panel.write_log(f"Switched to cluster: {cluster_name}")
-            else:
-                log_panel.write_log(f"Failed to switch to cluster: {cluster_name}", "ERROR")
-        
-        elif action == "test" and cluster_name:
-            success, message = self.k8s_manager.cluster_manager.test_cluster_connection(cluster_name)
-            log_panel.write_log(message, "INFO" if success else "ERROR")
     
     def _handle_command_result(self, result):
         """Handle command execution result"""

@@ -55,6 +55,43 @@ class ClustermApp(App):
         color: $error;
     }
     
+    /* Context Selector */
+    .context-selector {
+        border: solid $primary;
+        margin: 1 1 0 1;
+        padding: 1;
+        background: $surface;
+    }
+    
+    .context-title {
+        text-style: bold;
+        color: $primary;
+        text-align: center;
+        margin-bottom: 1;
+    }
+    
+    .context-controls {
+        height: auto;
+    }
+    
+    .cluster-selector-container,
+    .namespace-selector-container {
+        width: 50%;
+        margin: 0 1;
+    }
+    
+    .selector-label {
+        color: $text;
+        text-style: bold;
+        margin-bottom: 1;
+    }
+    
+    .cluster-select,
+    .namespace-select {
+        width: 100%;
+        margin-bottom: 1;
+    }
+    
     /* Main content layout */
     #main-content {
         height: 100%;
