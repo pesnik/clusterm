@@ -483,10 +483,11 @@ class CommandInput(Widget):
             self.command_type = command_type
             super().__init__()
     
-    def __init__(self, command_history_manager, k8s_manager, **kwargs):
+    def __init__(self, command_history_manager, k8s_manager, logger=None, **kwargs):
         super().__init__(**kwargs)
         self.command_history_manager = command_history_manager
         self.k8s_manager = k8s_manager
+        self.logger = logger
         
         # Initialize prompt_toolkit components
         self.completer = KubectlHelmCompleter(command_history_manager, k8s_manager)
@@ -516,14 +517,14 @@ class CommandInput(Widget):
     
     def compose(self):
         """Compose the intelligent input widget"""
-        with Container(classes="command-input"):
-            yield Static("⚡ Command Input", classes="input-title")
-            yield Static("Press Ctrl+I to launch command input terminal", classes="input-hint")
-            
-            with Horizontal(classes="input-buttons"):
-                yield Button("⚡ Command Input (Ctrl+I)", variant="primary", id="command-input-btn")
-                yield Button("📋 From Pad", variant="default", id="pad-btn")
-                yield Button("ℹ️ Help", variant="default", id="help-btn")
+        if self.logger:
+            self.logger.debug("CommandInput.compose: Creating command input widget layout")
+        
+        yield Static("⚡ Command Input", classes="input-title")
+        yield Static("Press Ctrl+I to launch command input terminal", classes="input-hint")
+        yield Button("⚡ Command Input (Ctrl+I)", variant="primary", id="command-input-btn")
+        yield Button("📋 From Pad", variant="default", id="pad-btn")
+        yield Button("ℹ️ Help", variant="default", id="help-btn")
     
     @on(Button.Pressed, "#command-input-btn")
     def command_input_pressed(self):

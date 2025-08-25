@@ -2,9 +2,8 @@
 Command pad component for displaying and selecting frequently used commands
 """
 
-from typing import List, Optional, Callable
-from textual.containers import Container, Vertical, Horizontal
-from textual.widgets import Button, Static, DataTable, Input, Select
+from typing import List, Optional
+from textual.widgets import Button, Static, DataTable
 from textual.widget import Widget
 from textual.binding import Binding
 from textual.message import Message
@@ -27,61 +26,39 @@ class CommandPad(Widget):
             self.command = command
             super().__init__()
     
-    def __init__(self, command_history: CommandHistoryManager, **kwargs):
+    def __init__(self, command_history: CommandHistoryManager, logger=None, **kwargs):
         super().__init__(**kwargs)
         self.command_history = command_history
+        self.logger = logger
         self.current_filter = "frequent"  # frequent, recent, all
         self.search_query = ""
+        
     
     def compose(self):
         """Compose the command pad"""
-        with Container(classes="command-pad"):
-            yield Static("⚡ Command Pad", classes="command-pad-title")
-            
-            with Horizontal(classes="command-pad-controls"):
-                yield Select([
-                    ("Most Frequent", "frequent"),
-                    ("Recent", "recent"), 
-                    ("All Commands", "all")
-                ], value="frequent", id="filter-select")
-                
-                yield Input(
-                    placeholder="Search commands...",
-                    id="search-input"
-                )
-            
-            yield DataTable(id="commands-table", classes="commands-table")
-            
-            with Horizontal(classes="command-pad-buttons"):
-                yield Button("📋 Use", variant="primary", id="use-btn")
-                yield Button("⭐ Add Current", variant="default", id="add-btn")
-                yield Button("🗑️ Delete", variant="error", id="delete-btn")
+        yield Static("⚡ Command Pad", classes="command-pad-title")
+        yield DataTable(id="commands-table", classes="commands-table")
+        yield Button("📋 Use", variant="primary", id="use-btn")
+        yield Button("🗑️ Delete", variant="error", id="delete-btn")
     
     def on_mount(self):
         """Setup the command pad when mounted"""
+        if self.logger:
+            self.logger.debug("CommandPad.on_mount: Starting mount process")
+        
         table = self.query_one("#commands-table", DataTable)
-        table.add_columns("Command", "Type", "Uses", "Description")
+        table.add_columns("Command", "Type", "Uses")
         table.cursor_type = "row"
+        
+        # Force table to have minimum dimensions
+        table.styles.height = "auto"
+        table.styles.min_height = 10
+        
+        if self.logger:
+            self.logger.debug("CommandPad.on_mount: Table setup complete, refreshing commands")
+        
         self._refresh_commands()
     
-    @on(Select.Changed, "#filter-select")
-    def filter_changed(self, event: Select.Changed):
-        """Handle filter selection change"""
-        self.current_filter = event.value
-        self._refresh_commands()
-    
-    @on(Input.Submitted, "#search-input")
-    def search_submitted(self, event: Input.Submitted):
-        """Handle search input"""
-        self.search_query = event.value.strip()
-        self._refresh_commands()
-    
-    @on(Input.Changed, "#search-input")
-    def search_changed(self, event: Input.Changed):
-        """Handle search input change (real-time search)"""
-        if not event.value.strip():  # Clear search
-            self.search_query = ""
-            self._refresh_commands()
     
     @on(Button.Pressed, "#use-btn")
     def use_command(self):
@@ -97,11 +74,6 @@ class CommandPad(Widget):
                 self.post_message(self.CommandSelected(selected_command))
                 self._refresh_commands()  # Refresh to update usage count
     
-    @on(Button.Pressed, "#add-btn")
-    def add_current_command(self):
-        """Add current command from execute modal"""
-        # This will be handled by parent to get current command from execute modal
-        self.post_message(self.CommandSelected(None))  # Signal to show add dialog
     
     @on(Button.Pressed, "#delete-btn")
     def delete_selected_command(self):
@@ -140,41 +112,37 @@ class CommandPad(Widget):
     
     def _refresh_commands(self):
         """Refresh the commands table"""
+        if self.logger:
+            self.logger.debug("CommandPad._refresh_commands: Starting command refresh")
+        
         table = self.query_one("#commands-table", DataTable)
         table.clear()
         
         commands = self._get_filtered_commands()
         
+        if self.logger:
+            self.logger.debug(f"CommandPad._refresh_commands: Found {len(commands)} commands")
+        
         for cmd in commands:
             table.add_row(
                 cmd.command[:50] + ("..." if len(cmd.command) > 50 else ""),
                 cmd.command_type,
-                str(cmd.usage_count),
-                cmd.description[:30] + ("..." if len(cmd.description) > 30 else "")
+                str(cmd.usage_count)
             )
         
         # Update button states
-        use_btn = self.query_one("#use-btn", Button)
-        delete_btn = self.query_one("#delete-btn", Button)
-        has_commands = len(commands) > 0
-        use_btn.disabled = not has_commands
-        delete_btn.disabled = not has_commands
-    
-    def action_toggle_filter(self):
-        """Toggle between filter modes"""
-        select = self.query_one("#filter-select", Select)
-        current_index = 0
-        options = ["frequent", "recent", "all"]
         try:
-            current_index = options.index(self.current_filter)
-        except ValueError:
-            pass
+            use_btn = self.query_one("#use-btn", Button)
+            delete_btn = self.query_one("#delete-btn", Button)
+            has_commands = len(commands) > 0
+            use_btn.disabled = not has_commands
+            delete_btn.disabled = not has_commands
+        except Exception:
+            pass  # Buttons might not exist yet
         
-        next_index = (current_index + 1) % len(options)
-        next_value = options[next_index]
-        select.value = next_value
-        self.current_filter = next_value
-        self._refresh_commands()
+        if self.logger:
+            self.logger.debug(f"CommandPad._refresh_commands: Completed refresh with {len(commands)} commands displayed")
+    
     
     def action_refresh(self):
         """Refresh commands"""

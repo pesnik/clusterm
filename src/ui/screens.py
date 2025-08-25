@@ -143,12 +143,13 @@ class MainScreen(Screen):
                             yield Button("Describe", id="describe-namespace-btn")
                     
                     with TabPane("Command Pad", id="command-pad-tab"):
-                        yield CommandPad(self.command_history, id="command-pad")
+                        yield CommandPad(self.command_history, logger=self.logger, id="command-pad")
                     
                     with TabPane("Smart Input", id="smart-input-tab"):
                         yield CommandInput(
                             self.command_history, 
                             self.k8s_manager,
+                            logger=self.logger,
                             id="interactive-input"
                         )
             
