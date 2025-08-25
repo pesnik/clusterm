@@ -133,8 +133,7 @@ clusterm/
 │           ├── panels.py    # UI panels
 │           ├── modals.py    # Modal dialogs
 │           ├── command_pad.py # Command pad component
-│           ├── intelligent_command_input.py # Smart input widget
-│           └── enhanced_command_input.py # Enhanced command utilities
+│           └── intelligent_command_input.py # Smart input with prompt_toolkit
 ├── examples/                # Demo and example scripts
 │   └── intelligent_input_demo.py # Interactive demo of smart input
 ├── tests/                   # Test suite
