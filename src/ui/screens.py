@@ -206,30 +206,25 @@ class MainScreen(Screen):
             if not self.tables:
                 return  # Tables not set up yet
                 
-            log_panel.write_log(f"🔄 Starting data refresh for namespace: {self.current_namespace}")
+            log_panel.write_log(f"🔄 Refreshing data for namespace: {self.current_namespace}")
             
             # Refresh deployments for current namespace
-            log_panel.write_log("📦 Executing: kubectl get deployments")
             deployments = self.k8s_manager.get_deployments(self.current_namespace)
             self._update_deployments_table(deployments)
             
             # Refresh pods
-            log_panel.write_log("🔧 Executing: kubectl get pods")
             pods = self.k8s_manager.get_pods(self.current_namespace)
             self._update_pods_table(pods)
             
             # Refresh services
-            log_panel.write_log("🌐 Executing: kubectl get services")
             services = self.k8s_manager.get_services(self.current_namespace)
             self._update_services_table(services)
             
             # Refresh helm releases
-            log_panel.write_log("⛵ Executing: helm list")
             helm_releases = self.k8s_manager.get_helm_releases()
             self._update_helm_table(helm_releases)
             
             # Refresh namespaces
-            log_panel.write_log("📂 Executing: kubectl get namespaces")
             namespaces = self.k8s_manager.get_namespaces()
             self._update_namespaces_table(namespaces)
             
@@ -273,6 +268,13 @@ class MainScreen(Screen):
         table = self.tables["deployments"]
         table.clear()
         
+        # Debug logging
+        try:
+            log_panel = self.query_one("#log-panel", LogPanel)
+            log_panel.write_log(f"🔧 DEBUG: Updating deployments table with {len(deployments)} items")
+        except:
+            pass
+        
         for deployment in deployments:
             name = deployment["metadata"]["name"]
             namespace = deployment["metadata"]["namespace"]
@@ -303,6 +305,15 @@ class MainScreen(Screen):
             
         table = self.tables["pods"]
         table.clear()
+        
+        # Debug logging
+        try:
+            log_panel = self.query_one("#log-panel", LogPanel)
+            log_panel.write_log(f"🔧 DEBUG: Updating pods table with {len(pods)} items")
+            if len(pods) > 0:
+                log_panel.write_log(f"🔧 DEBUG: First pod name: {pods[0].get('metadata', {}).get('name', 'unknown')}")
+        except:
+            pass
         
         for pod in pods:
             name = pod["metadata"]["name"]
@@ -481,17 +492,14 @@ class MainScreen(Screen):
             log_panel = self.query_one("#log-panel", LogPanel)
             
             # Update pods
-            log_panel.write_log(f"🔧 Fetching pods for namespace: {self.current_namespace}")
             pods = self.k8s_manager.get_pods(self.current_namespace)
             self._update_pods_table(pods)
             
             # Update services
-            log_panel.write_log(f"🌐 Fetching services for namespace: {self.current_namespace}")
             services = self.k8s_manager.get_services(self.current_namespace)
             self._update_services_table(services)
             
             # Update deployments for current namespace
-            log_panel.write_log(f"📦 Fetching deployments for namespace: {self.current_namespace}")
             deployments = self.k8s_manager.get_deployments(self.current_namespace)
             self._update_deployments_table(deployments)
             
