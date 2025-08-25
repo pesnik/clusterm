@@ -47,9 +47,9 @@ class ClustermApp(App):
         # Initialize core components
         self.config = Config(config_path)
         self.logger = Logger(self.config)
-        self.event_bus = EventBus()
+        self.event_bus = EventBus(self.logger)
         config_dir = Path(self.config.get("app.config_dir", "~/.clusterm")).expanduser()
-        self.command_history = CommandHistoryManager(config_dir)
+        self.command_history = CommandHistoryManager(config_dir, self.logger)
         
         
         # Initialize managers

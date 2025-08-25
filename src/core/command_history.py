@@ -30,8 +30,9 @@ class CommandEntry:
 class CommandHistoryManager:
     """Manages command history and frequently used commands with cluster/namespace context"""
     
-    def __init__(self, config_dir: Path):
+    def __init__(self, config_dir: Path, logger):
         self.config_dir = config_dir
+        self.logger = logger
         self.history_file = config_dir / "command_history.json"
         # Commands organized by cluster -> namespace -> commands
         self.commands_by_context: Dict[str, Dict[str, List[CommandEntry]]] = defaultdict(lambda: defaultdict(list))
@@ -43,6 +44,7 @@ class CommandHistoryManager:
     
     def _load_history(self):
         """Load command history from file"""
+        self.logger.debug(f"Loading command history from {self.history_file}")
         if self.history_file.exists():
             try:
                 with open(self.history_file, 'r') as f:
@@ -68,16 +70,20 @@ class CommandHistoryManager:
                             cmd = CommandEntry(**cmd_data)
                             self.commands_by_context[cmd.cluster][cmd.namespace].append(cmd)
                         # Save migrated data and remove legacy
+                        self.logger.info("Migrated legacy command history format")
                         self._save_history()
                         
-            except Exception:
+            except Exception as e:
+                self.logger.error(f"Error loading command history: {e}")
                 self.commands_by_context = defaultdict(lambda: defaultdict(list))
         else:
+            self.logger.debug("No existing command history file found, creating new one")
             self.commands_by_context = defaultdict(lambda: defaultdict(list))
             self._save_history()
     
     def _save_history(self):
         """Save command history to file"""
+        self.logger.debug(f"Saving command history to {self.history_file}")
         self.config_dir.mkdir(parents=True, exist_ok=True)
         
         # Convert nested defaultdict structure to regular dict for JSON
@@ -91,13 +97,18 @@ class CommandHistoryManager:
             'commands_by_context': commands_data,
             'last_updated': datetime.now().isoformat()
         }
-        with open(self.history_file, 'w') as f:
-            json.dump(data, f, indent=2)
+        try:
+            with open(self.history_file, 'w') as f:
+                json.dump(data, f, indent=2)
+            self.logger.debug("Command history saved successfully")
+        except Exception as e:
+            self.logger.error(f"Error saving command history: {e}")
     
     def set_context(self, cluster: str, namespace: str):
         """Set current cluster and namespace context"""
         self.current_cluster = cluster or "default"
         self.current_namespace = namespace or "default"
+        self.logger.debug(f"Context set to cluster={self.current_cluster}, namespace={self.current_namespace}")
     
     def add_command(self, command: str, description: str = "", tags: List[str] = None, cluster: str = None, namespace: str = None):
         """Add a command to history or increment usage if exists in current context"""
@@ -130,6 +141,7 @@ class CommandHistoryManager:
                 tags=tags or []
             )
             self.commands_by_context[context_cluster][context_namespace].append(new_cmd)
+            self.logger.info(f"Added new command to history: {command} (cluster={context_cluster}, namespace={context_namespace})")
         
         self._save_history()
     
