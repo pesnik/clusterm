@@ -75,39 +75,34 @@ class MainScreen(Screen):
                 # Right panel - Resource tabs
                 with TabbedContent(id="resources-tabs"):
                     with TabPane("Deployments", id="deployments-tab"):
-                        with Vertical():
-                            yield DataTable(id="deployments-table")
-                            
-                            with Horizontal(classes="tab-actions"):
-                                yield Button("View Logs", id="deployment-logs-btn")
-                                yield Button("Refresh", id="refresh-deployments-btn")
+                        yield DataTable(id="deployments-table")
+                        
+                        with Horizontal(classes="tab-actions"):
+                            yield Button("View Logs", id="deployment-logs-btn")
+                            yield Button("Refresh", id="refresh-deployments-btn")
                     
                     with TabPane("Pods", id="pods-tab"):
-                        with Vertical():
-                            yield DataTable(id="pods-table")
-                            
-                            with Horizontal(classes="tab-actions"):
-                                yield Button("Describe", id="describe-pod-btn")
-                                yield Button("Logs", id="pod-logs-btn")
+                        yield DataTable(id="pods-table")
+                        
+                        with Horizontal(classes="tab-actions"):
+                            yield Button("Describe", id="describe-pod-btn")
+                            yield Button("Logs", id="pod-logs-btn")
                     
                     with TabPane("Services", id="services-tab"):
-                        with Vertical():
-                            yield DataTable(id="services-table")
-                            
-                            with Horizontal(classes="tab-actions"):
-                                yield Button("Describe", id="describe-service-btn")
+                        yield DataTable(id="services-table")
+                        
+                        with Horizontal(classes="tab-actions"):
+                            yield Button("Describe", id="describe-service-btn")
                     
                     with TabPane("Helm Releases", id="helm-tab"):
-                        with Vertical():
-                            yield DataTable(id="helm-table")
-                            
-                            with Horizontal(classes="tab-actions"):
-                                yield Button("Status", id="helm-status-btn")
-                                yield Button("History", id="helm-history-btn")
+                        yield DataTable(id="helm-table")
+                        
+                        with Horizontal(classes="tab-actions"):
+                            yield Button("Status", id="helm-status-btn")
+                            yield Button("History", id="helm-history-btn")
                     
                     with TabPane("Namespaces", id="namespaces-tab"):
-                        with Vertical():
-                            yield DataTable(id="namespaces-table")
+                        yield DataTable(id="namespaces-table")
                     
                     with TabPane("Command Pad", id="command-pad-tab"):
                         yield CommandPad(self.command_history, id="command-pad")

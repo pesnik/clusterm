@@ -144,39 +144,9 @@ class ClustermApp(App):
         height: 3;
     }
     
-    /* Tables and Tab Content */
-    TabbedContent {
-        height: 100%;
-    }
-    
-    TabPane {
-        height: 100%;
-    }
-    
+    /* Tables */
     DataTable {
-        height: 1fr;
-        min-height: 20;
-    }
-    
-    /* Specific table containers */
-    #deployments-table,
-    #pods-table,
-    #services-table,
-    #helm-table,
-    #namespaces-table {
-        height: 1fr;
-    }
-    
-    /* Tab pane vertical containers */
-    TabPane > Vertical {
-        height: 100%;
-    }
-    
-    /* Tab actions */
-    .tab-actions {
-        height: auto;
-        margin-top: 1;
-        align: center middle;
+        height: 30;
     }
     
     .tab-actions Button {
