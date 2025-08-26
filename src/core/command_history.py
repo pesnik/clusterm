@@ -110,14 +110,15 @@ class CommandHistoryManager:
         self.current_namespace = namespace or "default"
         self.logger.debug(f"Context set to cluster={self.current_cluster}, namespace={self.current_namespace}")
     
-    def add_command(self, command: str, description: str = "", tags: List[str] = None, cluster: str = None, namespace: str = None):
+    def add_command(self, command: str, description: str = "", tags: List[str] = None, cluster: str = None, namespace: str = None, command_type: str = None):
         """Add a command to history or increment usage if exists in current context"""
         # Use provided context or current context
         context_cluster = cluster or self.current_cluster
         context_namespace = namespace or self.current_namespace
         
-        # Auto-detect command type
-        command_type = self._detect_command_type(command)
+        # Use provided command type or auto-detect
+        if not command_type:
+            command_type = self._detect_command_type(command)
         
         # Check if command already exists in current context
         existing_cmd = self._find_command(command, context_cluster, context_namespace)

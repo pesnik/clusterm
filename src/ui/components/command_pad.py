@@ -34,6 +34,13 @@ class CommandPad(Widget):
             self.command = command
             super().__init__()
     
+    class CommandAdded(Message):
+        """Message sent when a command is added"""
+        def __init__(self, command_data: dict):
+            self.command_data = command_data
+            super().__init__()
+    
+    
     def __init__(self, command_history: CommandHistoryManager, logger=None, **kwargs):
         super().__init__(**kwargs)
         self.command_history = command_history
@@ -122,28 +129,26 @@ class CommandPad(Widget):
     @on(Button.Pressed, "#add-btn")
     async def add_new_command(self):
         """Add new command"""
+        if self.logger:
+            self.logger.info("CommandPad: Add button pressed, launching modal")
+        
         from .modals import AddCommandModal
         
-        modal = AddCommandModal()
-        result = await self.app.push_screen(modal)
+        modal = AddCommandModal(self.command_history)
+        await self.app.push_screen(modal)
         
-        if result and result[0] == "add":
-            command_data = result[1]
-            # Add the command to history
-            self.command_history.add_command(
-                command=command_data["command"],
-                description=command_data["description"],
-                tags=command_data["tags"]
-            )
-            self._refresh_commands()
-            if self.logger:
-                self.logger.info(f"Added new command: {command_data['command']}")
+        # CommandPad will be refreshed via CommandAdded message from modal
     
     @on(Button.Pressed, "#edit-btn") 
     async def edit_selected_command(self):
         """Edit selected command"""
+        if self.logger:
+            self.logger.info("CommandPad: Edit button pressed")
+        
         selected_cmd = self.get_selected_command()
         if selected_cmd:
+            if self.logger:
+                self.logger.info(f"CommandPad: Editing command: {selected_cmd.command}")
             from .modals import EditCommandModal
             
             modal = EditCommandModal(selected_cmd)
@@ -156,7 +161,8 @@ class CommandPad(Widget):
                 self.command_history.add_command(
                     command=command_data["command"],
                     description=command_data["description"],
-                    tags=command_data["tags"]
+                    tags=command_data["tags"],
+                    command_type=command_data.get("command_type")
                 )
                 self._refresh_commands()
                 if self.logger:
@@ -172,6 +178,13 @@ class CommandPad(Widget):
                 selected_command = commands[table.cursor_row]
                 self.command_history.delete_command(selected_command.command)
                 self._refresh_commands()
+    
+    @on(CommandAdded)
+    def on_command_pad_command_added(self, event: CommandAdded):
+        """Handle CommandAdded message - refresh the UI"""
+        self._refresh_commands()
+        if self.logger:
+            self.logger.info(f"Command added via message, refreshing UI: {event.command_data['command']}")
     
     @on(DataTable.RowSelected)
     def row_selected(self, event: DataTable.RowSelected):

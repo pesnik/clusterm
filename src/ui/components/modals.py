@@ -212,9 +212,10 @@ class AddCommandModal(ModalScreen):
         Binding("escape", "dismiss", "Cancel", priority=True),
     ]
     
-    def __init__(self):
+    def __init__(self, command_history=None):
         super().__init__()
         self.result = None
+        self.command_history = command_history
     
     def compose(self):
         """Compose the add command modal"""
@@ -263,6 +264,50 @@ class AddCommandModal(ModalScreen):
         
         if command:
             tags = [tag.strip() for tag in tags_input.split(",") if tag.strip()] if tags_input else []
+            
+            # Persist the command directly
+            if self.command_history:
+                self.command_history.add_command(
+                    command=command,
+                    description=description or f"Execute {command}",
+                    tags=tags,
+                    command_type=command_type
+                )
+                
+                # Find CommandPad widget and post message directly to it
+                from .command_pad import CommandPad
+                command_data = {
+                    "command": command,
+                    "description": description or f"Execute {command}",
+                    "tags": tags,
+                    "command_type": command_type
+                }
+                
+                # Debug: Check what widgets are available
+                print(f"DEBUG: Total widgets in app: {len(list(self.app.query()))}")
+                print(f"DEBUG: CommandPad widgets found: {len(list(self.app.query(CommandPad)))}")
+                print(f"DEBUG: Current screen: {self.app.screen}")
+                print(f"DEBUG: Screen stack: {self.app.screen_stack}")
+                
+                # Try to access the screen under the modal
+                if len(self.app.screen_stack) > 1:
+                    main_screen = self.app.screen_stack[-2]  # Screen before modal
+                    print(f"DEBUG: Main screen: {main_screen}")
+                    command_pads = list(main_screen.query(CommandPad))
+                    print(f"DEBUG: CommandPads in main screen: {len(command_pads)}")
+                    
+                    if command_pads:
+                        widget = command_pads[0]
+                        print(f"DEBUG: Found CommandPad in main screen: {widget}")
+                        message = CommandPad.CommandAdded(command_data)
+                        print(f"DEBUG: Posting message to CommandPad: {message}")
+                        widget.post_message(message)
+                        print(f"DEBUG: Message posted successfully")
+                    else:
+                        print("DEBUG: No CommandPad found in main screen")
+                else:
+                    print("DEBUG: No main screen found in stack")
+            
             self.result = ("add", {
                 "command": command,
                 "description": description or f"Execute {command}",
