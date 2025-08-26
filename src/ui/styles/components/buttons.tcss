@@ -24,7 +24,6 @@ $border-primary: solid $primary;
     height: $button-height;
 }
 
-/* Tab Action Buttons */
 .tab-actions {
     height: $button-height;
     align: center middle;
@@ -65,16 +64,6 @@ $border-primary: solid $primary;
     margin-top: $spacing-xs;
 }
 
-/* Command Pad Buttons */
-.command-pad-buttons {
-    height: $button-height;
-    align: center middle;
-}
-
-.command-pad-buttons Button {
-    margin: 0 $spacing-xs;
-    min-width: $button-min-width;
-}
 
 /* Input Buttons */
 .input-buttons {

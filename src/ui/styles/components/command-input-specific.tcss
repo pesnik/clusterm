@@ -1,0 +1,66 @@
+/* Command Input Component-Specific Styles */
+
+/* Command Input Local Tokens */
+$command-input-spacing: 1;
+$command-input-title-height: 3;
+$command-input-hint-height: 2;
+
+/* Command Input Container */
+.intelligent-command-input {
+    height: 100%;
+    padding: $command-input-spacing;
+    background: $surface;
+    border: solid $outline-variant;
+    border-radius: 1;
+}
+
+/* Command Input Title */
+.input-title {
+    text-style: bold;
+    color: $primary;
+    text-align: center;
+    height: $command-input-title-height;
+    margin-bottom: $command-input-spacing;
+}
+
+/* Command Input Hint */
+.input-hint {
+    color: $text-muted;
+    text-style: italic;
+    text-align: center;
+    height: $command-input-hint-height;
+    margin-bottom: $command-input-spacing;
+}
+
+/* Command Input Buttons */
+.input-buttons {
+    height: 3;
+    align: center middle;
+    margin-top: $command-input-spacing;
+}
+
+.input-buttons Button {
+    margin: 0 $command-input-spacing;
+    min-width: 12;
+    height: 3;
+    background: $surface-lighten-1;
+    color: $text;
+    border: solid $primary;
+}
+
+.input-buttons Button:hover {
+    background: $primary;
+    color: $text-primary;
+}
+
+.intelligent-command-input .input-buttons {
+    height: 3;
+    align: center middle;
+    margin-top: $command-input-spacing;
+}
+
+.intelligent-command-input .input-buttons Button {
+    margin: 0 $command-input-spacing;
+    min-width: 16;
+    height: 3;
+}

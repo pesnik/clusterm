@@ -1,0 +1,56 @@
+/* Panels Component-Specific Styles */
+
+/* Log Panel Specific */
+.log-panel-title {
+    text-align: center;
+    color: $primary;
+    text-style: bold;
+    height: 1;
+    margin-bottom: 1;
+}
+
+/* Status Panel Specific */
+.status-panel {
+    align: center middle;
+    height: auto;
+    padding: 1;
+    margin-bottom: 1;
+}
+
+.status-label {
+    text-style: bold;
+    color: $primary;
+    margin-right: 2;
+}
+
+.status-value {
+    color: $text;
+    margin-right: 3;
+}
+
+#cluster-status {
+    color: $success;
+    text-style: bold;
+}
+
+#connection-status {
+    color: $success;
+    text-style: bold;
+}
+
+/* Charts Panel Specific */
+#charts-panel {
+    width: 30%;
+    height: 100%;
+}
+
+.charts-section {
+    height: 1fr;
+}
+
+.section-title {
+    text-style: bold;
+    color: $primary;
+    margin-bottom: 1;
+    text-align: center;
+}

@@ -43,13 +43,14 @@ class CommandPad(Widget):
         
     
     def compose(self):
-        """Compose CommandPad using exact working tab pattern"""
-        # Search controls first (using working tab-actions pattern)
-        with Horizontal(classes="tab-actions"):
-            yield Static("🔍 Search:", classes="control-label")
+        """Compose CommandPad using component-specific classes"""
+        # Search controls with CommandPad-specific styling
+        with Horizontal(classes="command-pad-search-controls"):
+            yield Static("🔍 Search:", classes="command-pad-search-label")
             yield Input(
                 placeholder="Search commands...",
-                id="search-input"
+                id="search-input",
+                classes="command-pad-search-input"
             )
             yield Select([
                 ("🔥 Most Used", "frequent"),
@@ -57,16 +58,16 @@ class CommandPad(Widget):
                 ("📋 All", "all"),
                 ("⚡ kubectl", "kubectl"),
                 ("🚢 Helm", "helm")
-            ], value="frequent", id="filter-select")
+            ], value="frequent", id="filter-select", classes="command-pad-filter-select")
         
-        # Main table (exactly like other working tabs)
-        yield DataTable(id="commands-table")
+        # Main table with CommandPad-specific styling
+        yield DataTable(id="commands-table", classes="command-pad-table")
         
-        # Action buttons (using working tab-actions pattern)
-        with Horizontal(classes="tab-actions"):
-            yield Button("Execute", id="use-btn")
-            yield Button("Copy", id="copy-btn")
-            yield Button("Delete", id="delete-btn")
+        # Action buttons with CommandPad-specific styling
+        with Horizontal(classes="command-pad-actions"):
+            yield Button("Execute", id="use-btn", classes="command-pad-button command-pad-button-primary")
+            yield Button("Copy", id="copy-btn", classes="command-pad-button command-pad-button-secondary")
+            yield Button("Delete", id="delete-btn", classes="command-pad-button command-pad-button-danger")
     
     def on_mount(self):
         """Setup the modern command pad"""
@@ -390,7 +391,7 @@ class CommandPad(Widget):
                 stats_text = f"🔍 Search '{self.search_query[:10]}' ({len(filtered_commands)}):"
             
             try:
-                label_static = self.query_one(".control-label", Static)
+                label_static = self.query_one(".command-pad-search-label", Static)
                 label_static.update(stats_text)
             except:
                 pass  # Label might not exist

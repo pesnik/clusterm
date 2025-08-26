@@ -1,0 +1,83 @@
+/* Resource Tabs Component Styles */
+
+/* Resource Tabs Local Tokens */
+$resource-tabs-spacing: 1;
+$resource-tabs-button-height: 3;
+$resource-tabs-button-width: 12;
+$resource-tabs-table-height: 1fr;
+
+/* Resource Tabs Container */
+#resources-tabs {
+    width: 70%;
+    height: 100%;
+}
+
+/* Resource Tabs Table Styling */
+.resource-tab-table {
+    height: $resource-tabs-table-height;
+    border: solid $outline-variant;
+}
+
+.resource-tab-table > .datatable--header {
+    background: $surface-variant;
+    color: $on-surface;
+    text-style: bold;
+}
+
+.resource-tab-table > .datatable--cursor {
+    background: $primary 20%;
+}
+
+.resource-tab-table > .datatable--hover {
+    background: $surface-variant;
+}
+
+/* Resource Tabs Action Buttons */
+.resource-tab-actions {
+    height: $resource-tabs-button-height;
+    align: center middle;
+    margin-top: $resource-tabs-spacing;
+    margin-bottom: $resource-tabs-spacing;
+    padding: 0 $resource-tabs-spacing;
+}
+
+.resource-tab-button {
+    margin: 0 $resource-tabs-spacing;
+    min-width: $resource-tabs-button-width;
+    height: $resource-tabs-button-height;
+    background: $surface-lighten-1;
+    color: $text;
+    border: solid $primary;
+}
+
+.resource-tab-button:hover {
+    background: $primary;
+    color: $text-primary;
+}
+
+.resource-tab-button:disabled {
+    background: $surface-variant;
+    color: $outline;
+    border: solid $outline-variant;
+}
+
+/* Specific Resource Tab Styling */
+#deployments-tab .resource-tab-table {
+    /* Deployments specific styling if needed */
+}
+
+#pods-tab .resource-tab-table {
+    /* Pods specific styling if needed */
+}
+
+#services-tab .resource-tab-table {
+    /* Services specific styling if needed */
+}
+
+#helm-tab .resource-tab-table {
+    /* Helm specific styling if needed */
+}
+
+#namespaces-tab .resource-tab-table {
+    /* Namespaces specific styling if needed */
+}

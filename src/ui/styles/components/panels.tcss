@@ -5,27 +5,7 @@ $spacing-xs: 1;
 $sidebar-width: 30%;
 $main-width: 70%;
 $panel-height-md: 8;
-$button-height: 3;
-
-/* Professional Command Pad Design System */
-$surface: #1a1a1a;
-$surface-variant: #2a2a2a;
-$surface-elevated: #3a3a3a;
-$on-surface: #ffffff;
-$on-surface-variant: #cccccc;
-$outline: #666666;
-$outline-variant: #444444;
-$shadow: #000000;
-
-/* Command Pad Specific Tokens */
-$command-pad-spacing: 1;
-$command-pad-border-radius: 2;
-$command-header-height: 3;
-$command-controls-height: 4;
-$command-actions-height: 3;
-$command-input-height: 1;
-
-/* Charts Panel */
+$button-height: 3;/* Charts Panel */
 #charts-panel {
     width: $sidebar-width;
     height: 100%;
@@ -45,10 +25,6 @@ TabPane {
     min-height: 50;
 }
 
-#command-pad {
-    height: 100%;
-    min-height: 50;
-}
 
 .charts-section {
     height: 1fr;
@@ -68,12 +44,5 @@ TabPane {
     margin-top: $spacing-xs;
 }
 
-.log-panel-title {
-    text-align: center;
-    color: $primary;
-    text-style: bold;
-    height: 1;
-    margin-bottom: $spacing-xs;
-}
 
 

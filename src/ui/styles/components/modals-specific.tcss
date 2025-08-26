@@ -1,0 +1,102 @@
+/* Modals Component-Specific Styles */
+
+/* Modal Local Tokens */
+$modal-spacing: 1;
+$modal-border-radius: 2;
+$modal-title-height: 3;
+$modal-button-height: 3;
+$modal-button-width: 12;
+$modal-content-spacing: 2;
+
+/* Modal Container */
+.modal {
+    background: $surface;
+    border: solid $primary;
+    border-radius: $modal-border-radius;
+    padding: $modal-content-spacing;
+    margin: $modal-spacing;
+}
+
+.large-modal {
+    width: 80%;
+    height: 80%;
+}
+
+/* Modal Title */
+.modal-title {
+    text-style: bold;
+    color: $primary;
+    text-align: center;
+    height: $modal-title-height;
+    margin-bottom: $modal-spacing;
+}
+
+/* Modal Content */
+.modal-content {
+    padding: $modal-content-spacing;
+    margin: $modal-spacing 0;
+}
+
+/* Modal Input Elements */
+.input-label {
+    text-style: bold;
+    color: $text;
+    margin-bottom: $modal-spacing;
+}
+
+.examples-title {
+    text-style: bold;
+    color: $primary;
+    margin-top: $modal-content-spacing;
+    margin-bottom: $modal-spacing;
+}
+
+.command-examples {
+    color: $text-muted;
+    font-family: monospace;
+    background: $surface-variant;
+    padding: $modal-spacing;
+    border-radius: $modal-border-radius;
+    margin-bottom: $modal-spacing;
+}
+
+.auto-detect-info {
+    color: $text-muted;
+    text-style: italic;
+    text-align: center;
+    margin-top: $modal-spacing;
+}
+
+.current-cluster {
+    color: $success;
+    text-style: bold;
+    text-align: center;
+    margin-bottom: $modal-content-spacing;
+}
+
+/* Modal Buttons */
+.modal-buttons {
+    align: center middle;
+    height: $modal-button-height;
+    width: 100%;
+    margin-top: $modal-spacing;
+}
+
+.modal-buttons Button {
+    margin: 0 $modal-spacing;
+    min-width: $modal-button-width;
+    height: $modal-button-height;
+}
+
+.modal-close-btn {
+    align: center middle;
+    margin-top: $modal-spacing;
+    height: $modal-button-height;
+    background: $error;
+    color: $text-primary;
+    border: solid $error;
+}
+
+.modal-close-btn:hover {
+    background: $error-lighten-1;
+}
