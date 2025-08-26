@@ -1016,8 +1016,8 @@ class MainScreen(Screen):
         if success:
             # Add to command history on successful execution (context-aware)
             self.command_history.add_command(full_command)
-            # Refresh command pad to show new command
-            self._refresh_command_pad()
+            # Notify all CommandPad widgets across tabs via global message
+            self._notify_command_executed(full_command, cmd_type)
             log_panel.write_log("Command executed successfully")
             if output.strip():
                 modal = LogModal(f"{cmd_type.title()} Output", output)
@@ -1077,6 +1077,38 @@ class MainScreen(Screen):
             # Command pad might not be visible/mounted
             pass
     
+    def _notify_command_executed(self, command: str, command_type: Optional[str] = None) -> None:
+        """
+        Notify all CommandPad widgets that a command was executed via direct message posting.
+        
+        This enables real-time refresh across all tabs when commands are executed,
+        ensuring the command history is immediately visible everywhere.
+        
+        Args:
+            command: The full command that was executed (e.g., "kubectl get pods")
+            command_type: The type of command (kubectl, helm, etc.)
+        """
+        try:
+            from .components.command_pad import CommandPad
+            
+            # Find all CommandPad widgets across all screens and notify them
+            all_command_pads = list(self.app.query(CommandPad))
+            
+            # If no CommandPads found in current context, check screen stack
+            if not all_command_pads:
+                for screen in self.app.screen_stack:
+                    screen_command_pads = list(screen.query(CommandPad))
+                    all_command_pads.extend(screen_command_pads)
+            
+            if all_command_pads:
+                message = CommandPad.CommandExecuted(command, command_type)
+                for command_pad in all_command_pads:
+                    command_pad.post_message(message)
+                    
+        except Exception:
+            # Silently fail - UI refresh isn't critical enough to affect command execution
+            pass
+    
     @on(CommandPad.CommandSelected)
     def handle_command_pad_selection(self, message):
         """Handle command selection from command pad"""
@@ -1109,8 +1141,8 @@ class MainScreen(Screen):
         if success:
             # Increment usage count for this command
             self.command_history.add_command(full_command)
-            # Update usage count in command pad
-            self._refresh_command_pad()
+            # Notify all CommandPad widgets across tabs via global message
+            self._notify_command_executed(full_command, cmd_type)
             log_panel.write_log("Command executed successfully")
             if output.strip():
                 modal = LogModal(f"{cmd_type.title()} Output", output)
@@ -1146,8 +1178,8 @@ class MainScreen(Screen):
         if success:
             # Add to command history
             self.command_history.add_command(full_command)
-            # Refresh command pad
-            self._refresh_command_pad()
+            # Notify all CommandPad widgets across tabs via global message
+            self._notify_command_executed(full_command, cmd_type)
             log_panel.write_log("✅ Smart command executed successfully")
             if output.strip():
                 modal = LogModal(f"🧠 {cmd_type.title()} Smart Output", output)

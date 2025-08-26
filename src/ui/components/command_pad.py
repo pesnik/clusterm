@@ -40,6 +40,13 @@ class CommandPad(Widget):
             self.command_data = command_data
             super().__init__()
     
+    class CommandExecuted(Message):
+        """Message sent when a command is executed"""
+        def __init__(self, command: str, command_type: Optional[str] = None) -> None:
+            self.command = command
+            self.command_type = command_type
+            super().__init__()
+    
     
     def __init__(self, command_history: CommandHistoryManager, logger=None, **kwargs):
         super().__init__(**kwargs)
@@ -185,6 +192,13 @@ class CommandPad(Widget):
         self._refresh_commands()
         if self.logger:
             self.logger.info(f"Command added via message, refreshing UI: {event.command_data['command']}")
+    
+    @on(CommandExecuted)
+    def on_command_pad_command_executed(self, event: CommandExecuted):
+        """Handle CommandExecuted message - refresh the UI to show executed command in history"""
+        self._refresh_commands()
+        if self.logger:
+            self.logger.info(f"Command executed via message, refreshing UI: {event.command}")
     
     @on(DataTable.RowSelected)
     def row_selected(self, event: DataTable.RowSelected):
