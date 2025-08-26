@@ -89,7 +89,7 @@ class K8sManager:
 
             if not any(clusters_dir.iterdir() if clusters_dir.exists() else []):
                 self.logger.info("K8sManager._ensure_directory_structure: No existing clusters found, creating example structure")
-                self._create_example_structure()
+                self._create_basic_structure()
             else:
                 self.logger.debug("K8sManager._ensure_directory_structure: Existing cluster configurations found")
 
@@ -101,193 +101,37 @@ class K8sManager:
                 "k8s_path": str(self.k8s_path),
             })
 
-    def _create_example_structure(self):
-        """Create example cluster-aware configuration structure for first-time users"""
-        self.logger.debug("K8sManager._create_example_structure: Entry - Creating example configuration")
+    def _create_basic_structure(self):
+        """Create minimal required directory structure"""
+        self.logger.debug("K8sManager._create_basic_structure: Entry - Creating basic directories")
 
         try:
-            # Create example cluster directory
-            example_cluster = self.k8s_path / "clusters" / "example-cluster"
-            self.logger.debug(f"K8sManager._create_example_structure: Creating example cluster directory: {example_cluster}")
-            example_cluster.mkdir(exist_ok=True)
-
-            # Create cluster projects structure
-            projects_dir = example_cluster / "projects"
-            default_ns = projects_dir / "default"
-            monitoring_ns = projects_dir / "monitoring"
-            
-            projects_dir.mkdir(exist_ok=True)
-            default_ns.mkdir(exist_ok=True)
-            monitoring_ns.mkdir(exist_ok=True)
-
-            # Create example kubeconfig with instructions
-            kubeconfig_example = example_cluster / "kubeconfig.example"
-            kubeconfig_example.write_text("""# Example kubeconfig file
-# 1. Copy your actual kubeconfig here and rename to 'kubeconfig' (without .example)
-# 2. Or create a symlink to your existing kubeconfig:
-#    ln -s ~/.kube/config kubeconfig
-#
-# You can have multiple cluster directories under ~/.clusterm/k8s/clusters/
-# Each cluster directory should contain:
-# - kubeconfig file
-# - projects/ directory with namespace-specific projects
-
-apiVersion: v1
-kind: Config
-contexts:
-- context:
-    cluster: example-cluster
-    user: example-user
-  name: example-context
-current-context: example-context
-clusters:
-- cluster:
-    server: https://your-kubernetes-api-server:6443
-  name: example-cluster
-users:
-- name: example-user
-  user:
-    # Add your authentication config here
-""")
-
-            # Create tools directory with instructions
+            # Create tools directory with instructions only
             tools_readme = self.k8s_path / "tools" / "README.md"
-            tools_readme.write_text("""# Tools Directory
+            if not tools_readme.exists():
+                tools_readme.parent.mkdir(exist_ok=True)
+                tools_readme.write_text("""# Tools Directory
 
 Place your kubectl and helm binaries here, or ensure they're in your system PATH.
 
-## Option 1: System PATH (Recommended)
+## Recommended: System PATH
 - Install kubectl and helm normally on your system
 - Clusterm will find them automatically
 
-## Option 2: Local Tools
+## Alternative: Local Tools
 - Download kubectl binary and place as: `kubectl`
-- Download helm binary and place as: `helm`
-- Make sure they're executable: `chmod +x kubectl helm`
+- Download helm binary and place as: `helm`  
+- Make them executable: `chmod +x kubectl helm`
 
-## Downloads:
+## Downloads
 - kubectl: https://kubernetes.io/docs/tasks/tools/install-kubectl/
 - helm: https://helm.sh/docs/intro/install/
 """)
 
-            # Create example helm chart in default namespace
-            example_chart = default_ns / "nginx-app"
-            example_chart.mkdir(exist_ok=True)
-
-            chart_yaml = example_chart / "Chart.yaml"
-            chart_yaml.write_text("""apiVersion: v2
-name: nginx-app
-description: Example nginx application for default namespace
-version: 1.0.0
-appVersion: 1.21.0
-""")
-
-            values_yaml = example_chart / "values.yaml"
-            values_yaml.write_text("""# Example values file for nginx-app
-replicaCount: 1
-
-image:
-  repository: nginx
-  tag: 1.21.0
-  pullPolicy: IfNotPresent
-
-service:
-  type: ClusterIP
-  port: 80
-
-ingress:
-  enabled: false
-  className: ""
-  annotations: {}
-  hosts:
-    - host: nginx-app.local
-      paths:
-        - path: /
-          pathType: Prefix
-  tls: []
-
-resources: {}
-
-nodeSelector: {}
-
-tolerations: []
-
-affinity: {}
-""")
-
-            # Create monitoring chart in monitoring namespace
-            monitoring_chart = monitoring_ns / "prometheus-stack"
-            monitoring_chart.mkdir(exist_ok=True)
-
-            monitoring_chart_yaml = monitoring_chart / "Chart.yaml"
-            monitoring_chart_yaml.write_text("""apiVersion: v2
-name: prometheus-stack
-description: Prometheus monitoring stack for cluster observability
-version: 1.0.0
-appVersion: 2.45.0
-""")
-
-            monitoring_values = monitoring_chart / "values.yaml"
-            monitoring_values.write_text("""# Prometheus monitoring stack values
-prometheus:
-  enabled: true
-  retention: "15d"
-  resources:
-    requests:
-      memory: 1Gi
-      cpu: 100m
-
-grafana:
-  enabled: true
-  adminPassword: "admin123"
-  resources:
-    requests:
-      memory: 256Mi
-      cpu: 100m
-
-alertmanager:
-  enabled: true
-  resources:
-    requests:
-      memory: 128Mi
-      cpu: 50m
-""")
-
-            # Create README for the structure
-            structure_readme = example_cluster / "README.md"
-            structure_readme.write_text("""# Example Cluster Structure
-
-This directory contains cluster-specific configuration and projects.
-
-## Structure
-```
-example-cluster/
-├── kubeconfig.example          # Cluster connection config
-├── projects/                   # Namespace-organized projects
-│   ├── default/               # Default namespace projects
-│   │   └── nginx-app/         # Example web application
-│   └── monitoring/            # Monitoring namespace projects  
-│       └── prometheus-stack/  # Monitoring infrastructure
-└── README.md                  # This file
-```
-
-## Getting Started
-1. Rename `kubeconfig.example` to `kubeconfig` and configure with your cluster details
-2. Projects are organized by namespace for better context awareness
-3. Each project directory contains Helm charts specific to that cluster/namespace
-4. Use Clusterm's context selector to switch between clusters and namespaces
-
-## Benefits
-- **Context Awareness**: Projects are filtered by selected cluster/namespace
-- **Reduced Noise**: Only see relevant projects for current context
-- **Environment Safety**: Prevents accidental cross-environment deployments
-- **Team Organization**: Clear separation of responsibilities
-""")
-
-            self.logger.info("K8sManager._create_example_structure: Created cluster-aware example structure successfully")
+            self.logger.info("K8sManager._create_basic_structure: Created basic directory structure")
 
         except Exception as e:
-            self.logger.error(f"K8sManager._create_example_structure: Failed to create example structure: {e}", extra={
+            self.logger.error(f"K8sManager._create_basic_structure: Failed to create basic structure: {e}", extra={
                 "error_type": type(e).__name__,
                 "k8s_path": str(self.k8s_path),
             })
@@ -369,54 +213,123 @@ example-cluster/
         
         return namespace_path
 
-    def get_available_charts(self, namespace: str = "default") -> list[dict[str, str]]:
-        """Get list of available Helm charts for current cluster and namespace"""
-        self.logger.debug(f"K8sManager.get_available_charts: Entry - namespace: {namespace}")
+    def get_available_projects(self, namespace: str = "default") -> dict[str, list[dict[str, str]]]:
+        """Get all available projects (helm-charts, manifests, apps) for current cluster and namespace"""
+        self.logger.debug(f"K8sManager.get_available_projects: Entry - namespace: {namespace}")
 
-        charts = []
+        projects = {
+            "helm-charts": [],
+            "manifests": [],
+            "apps": [],
+            "other": []
+        }
         
         # Get namespace projects path for current cluster
         namespace_path = self.get_current_namespace_projects_path(namespace)
         if not namespace_path or not namespace_path.exists():
-            self.logger.warning(f"K8sManager.get_available_charts: Projects directory not found for namespace: {namespace}")
-            return charts
+            self.logger.warning(f"K8sManager.get_available_projects: Projects directory not found for namespace: {namespace}")
+            return projects
 
-        self.logger.debug(f"K8sManager.get_available_charts: Scanning charts in: {namespace_path}")
+        self.logger.debug(f"K8sManager.get_available_projects: Scanning projects in: {namespace_path}")
 
-        chart_dirs = [d for d in namespace_path.iterdir() if d.is_dir()]
-        self.logger.debug(f"K8sManager.get_available_charts: Found {len(chart_dirs)} potential chart directories")
-
-        for i, chart_dir in enumerate(chart_dirs):
-            if (chart_dir / "Chart.yaml").exists():
-                self.logger.debug(f"K8sManager.get_available_charts: Processing chart {i+1}/{len(chart_dirs)}: {chart_dir.name}")
-                chart_info = {
-                    "name": chart_dir.name,
-                    "path": str(chart_dir),
-                    "namespace": namespace,
-                    "cluster": self.cluster_manager.current_cluster or "unknown",
-                    "description": "No description",
-                    "version": "unknown",
-                }
-
-                try:
-                    self.logger.debug(f"K8sManager.get_available_charts: Reading Chart.yaml for {chart_dir.name}")
-                    with open(chart_dir / "Chart.yaml") as f:
-                        chart_yaml = yaml.safe_load(f)
-                        chart_info["description"] = chart_yaml.get("description", "No description")
-                        chart_info["version"] = chart_yaml.get("version", "unknown")
-                        chart_info["app_version"] = chart_yaml.get("appVersion", "unknown")
-
-                    self.logger.debug(f"K8sManager.get_available_charts: Chart {chart_dir.name} - version: {chart_info['version']}, desc: {chart_info['description'][:50]}...")
-
-                except Exception as e:
-                    self.logger.warning(f"K8sManager.get_available_charts: Could not read Chart.yaml for {chart_dir.name}: {e}")
-
-                charts.append(chart_info)
-                self.logger.debug(f"K8sManager.get_available_charts: Added chart: {chart_dir.name}")
+        # Scan for different project types
+        for project_type_dir in namespace_path.iterdir():
+            if not project_type_dir.is_dir():
+                continue
+                
+            project_type = project_type_dir.name.lower()
+            self.logger.debug(f"K8sManager.get_available_projects: Found project type directory: {project_type}")
+            
+            # Determine project category
+            if project_type in ["helm-charts", "helm", "charts"]:
+                category = "helm-charts"
+            elif project_type in ["manifests", "yaml", "yamls", "k8s"]:
+                category = "manifests"  
+            elif project_type in ["apps", "applications"]:
+                category = "apps"
             else:
-                self.logger.debug(f"K8sManager.get_available_charts: Skipping {chart_dir.name} - no Chart.yaml found")
+                category = "other"
+            
+            # Scan projects within this type
+            project_items = self._scan_project_directory(project_type_dir, category)
+            projects[category].extend(project_items)
+            
+        total_projects = sum(len(items) for items in projects.values())
+        self.logger.info(f"K8sManager.get_available_projects: Found {total_projects} projects in {namespace} namespace")
+        return projects
 
-        self.logger.info(f"K8sManager.get_available_charts: Found {len(charts)} charts in {namespace} namespace")
+    def _scan_project_directory(self, project_dir: Path, project_type: str) -> list[dict[str, str]]:
+        """Scan a project directory for individual projects"""
+        items = []
+        
+        for item_path in project_dir.iterdir():
+            if not item_path.is_dir():
+                continue
+                
+            item_info = {
+                "name": item_path.name,
+                "path": str(item_path),
+                "type": project_type,
+                "namespace": project_dir.parent.name,
+                "cluster": self.cluster_manager.current_cluster or "unknown",
+                "description": "No description",
+                "version": "unknown",
+            }
+            
+            # Type-specific processing
+            if project_type == "helm-charts":
+                # Check for Chart.yaml
+                if (item_path / "Chart.yaml").exists():
+                    try:
+                        with open(item_path / "Chart.yaml") as f:
+                            chart_yaml = yaml.safe_load(f)
+                            item_info["description"] = chart_yaml.get("description", "Helm chart")
+                            item_info["version"] = chart_yaml.get("version", "unknown")
+                            item_info["app_version"] = chart_yaml.get("appVersion", "unknown")
+                    except Exception as e:
+                        self.logger.warning(f"K8sManager._scan_project_directory: Could not read Chart.yaml for {item_path.name}: {e}")
+                        item_info["description"] = "Helm chart (error reading Chart.yaml)"
+                else:
+                    # Skip if no Chart.yaml
+                    continue
+                    
+            elif project_type == "manifests":
+                # Check for YAML files
+                yaml_files = list(item_path.glob("*.yaml")) + list(item_path.glob("*.yml"))
+                if yaml_files:
+                    item_info["description"] = f"Kubernetes manifests ({len(yaml_files)} files)"
+                else:
+                    item_info["description"] = "Kubernetes manifests directory"
+                    
+            elif project_type == "apps":
+                # Check for common app files
+                app_files = (
+                    list(item_path.glob("*.yaml")) + 
+                    list(item_path.glob("*.yml")) +
+                    list(item_path.glob("Dockerfile")) +
+                    list(item_path.glob("docker-compose.yml"))
+                )
+                if app_files:
+                    item_info["description"] = f"Application ({len(app_files)} files)"
+                else:
+                    item_info["description"] = "Application directory"
+                    
+            else:
+                item_info["description"] = f"{project_type.title()} project"
+            
+            items.append(item_info)
+            
+        self.logger.debug(f"K8sManager._scan_project_directory: Found {len(items)} items in {project_dir.name}")
+        return items
+
+    def get_available_charts(self, namespace: str = "default") -> list[dict[str, str]]:
+        """Get list of available Helm charts for current cluster and namespace (backward compatibility)"""
+        self.logger.debug(f"K8sManager.get_available_charts: Entry - namespace: {namespace}")
+        
+        projects = self.get_available_projects(namespace)
+        charts = projects.get("helm-charts", [])
+        
+        self.logger.info(f"K8sManager.get_available_charts: Found {len(charts)} Helm charts in {namespace} namespace")
         return charts
 
     def deploy_chart(self, chart_name: str, config: dict) -> tuple[bool, str]:

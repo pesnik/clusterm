@@ -49,7 +49,7 @@ class CommandModal(ModalScreen):
     @on(Button.Pressed, "#execute-btn")
     def execute_pressed(self):
         """Handle execute button press"""
-        full_command = self.query_one("#command-input").value.strip()
+        full_command = self.query_one("#command-input", Input).value.strip()
 
         if full_command:
             # Auto-detect command type and extract args
@@ -86,10 +86,10 @@ class CommandModal(ModalScreen):
         self.result = ("cancel", None, None)
         self.dismiss(self.result)
 
-    def action_dismiss(self):
+    async def action_dismiss(self, result=None):
         """Handle escape key - same as cancel"""
         self.result = ("cancel", None, None)
-        self.dismiss(self.result)
+        await self.dismiss(self.result)
 
 
 class ConfigModal(ModalScreen):
@@ -146,10 +146,10 @@ class ConfigModal(ModalScreen):
     def deploy_pressed(self):
         """Handle deploy button press"""
         config = {
-            "namespace": self.query_one("#namespace-input").value or "default",
-            "replicas": self.query_one("#replicas-input").value or "1",
-            "environment": self.query_one("#env-select").value,
-            "monitoring": self.query_one("#monitoring-switch").value,
+            "namespace": self.query_one("#namespace-input", Input).value or "default",
+            "replicas": self.query_one("#replicas-input", Input).value or "1",
+            "environment": self.query_one("#env-select", Select).value,
+            "monitoring": self.query_one("#monitoring-switch", Switch).value,
         }
         self.result = ("deploy", self.chart_name, config)
         self.dismiss(self.result)
@@ -160,10 +160,10 @@ class ConfigModal(ModalScreen):
         self.result = ("cancel", None, None)
         self.dismiss(self.result)
 
-    def action_dismiss(self):
+    async def action_dismiss(self, result=None):
         """Handle escape key - same as cancel"""
         self.result = ("cancel", None, None)
-        self.dismiss(self.result)
+        await self.dismiss(self.result)
 
 
 class LogModal(ModalScreen):
@@ -174,7 +174,7 @@ class LogModal(ModalScreen):
         Binding("enter", "dismiss", "Close", priority=True),
     ]
 
-    def __init__(self, title: str, content: str, syntax: str | None = None):
+    def __init__(self, title: str, content: str | None = None, syntax: str | None = None):
         super().__init__()
         self.title = title
         self.content = content
@@ -183,24 +183,25 @@ class LogModal(ModalScreen):
     def compose(self):
         """Compose the log modal"""
         with Container(classes="modal large-modal"):
-            yield Static(self.title, classes="modal-title")
+            yield Static(self.title or "Log", classes="modal-title")
             yield Log(highlight=True, id="log-content")
             yield Button("Close (Esc)", id="close-btn", classes="modal-close-btn")
 
     def on_mount(self):
         """Populate log content when modal mounts"""
         log_widget = self.query_one("#log-content", Log)
-        for line in self.content.split("\n"):
-            log_widget.write_line(line)
+        if self.content:
+            for line in self.content.split("\n"):
+                log_widget.write_line(line)
 
     @on(Button.Pressed, "#close-btn")
     def close_pressed(self):
         """Handle close button press"""
         self.dismiss()
 
-    def action_dismiss(self):
+    async def action_dismiss(self, result=None):
         """Handle escape/enter key - close modal"""
-        self.dismiss()
+        await self.dismiss()
 
 
 class AddCommandModal(ModalScreen):
@@ -255,10 +256,10 @@ class AddCommandModal(ModalScreen):
     @on(Button.Pressed, "#add-btn")
     def add_pressed(self):
         """Handle add button press"""
-        command = self.query_one("#command-input").value.strip()
-        description = self.query_one("#description-input").value.strip()
-        tags_input = self.query_one("#tags-input").value.strip()
-        command_type = self.query_one("#type-select").value
+        command = self.query_one("#command-input", Input).value.strip()
+        description = self.query_one("#description-input", Input).value.strip()
+        tags_input = self.query_one("#tags-input", Input).value.strip()
+        command_type = self.query_one("#type-select", Select).value
 
         if command:
             tags = [tag.strip() for tag in tags_input.split(",") if tag.strip()] if tags_input else []
@@ -297,10 +298,10 @@ class AddCommandModal(ModalScreen):
         self.result = ("cancel", None)
         self.dismiss(self.result)
 
-    def action_dismiss(self):
+    async def action_dismiss(self, result=None):
         """Handle escape key - same as cancel"""
         self.result = ("cancel", None)
-        self.dismiss(self.result)
+        await self.dismiss(self.result)
 
     def _notify_command_added(self, command_data: dict[str, Any]) -> None:
         """Notify CommandPad widgets of newly added command via message system.
@@ -383,10 +384,10 @@ class EditCommandModal(ModalScreen):
     @on(Button.Pressed, "#save-btn")
     def save_pressed(self):
         """Handle save button press"""
-        command = self.query_one("#command-input").value.strip()
-        description = self.query_one("#description-input").value.strip()
-        tags_input = self.query_one("#tags-input").value.strip()
-        command_type = self.query_one("#type-select").value
+        command = self.query_one("#command-input", Input).value.strip()
+        description = self.query_one("#description-input", Input).value.strip()
+        tags_input = self.query_one("#tags-input", Input).value.strip()
+        command_type = self.query_one("#type-select", Select).value
 
         if command:
             tags = [tag.strip() for tag in tags_input.split(",") if tag.strip()] if tags_input else []
@@ -408,10 +409,10 @@ class EditCommandModal(ModalScreen):
         self.result = ("cancel", None)
         self.dismiss(self.result)
 
-    def action_dismiss(self):
+    async def action_dismiss(self, result=None):
         """Handle escape key - same as cancel"""
         self.result = ("cancel", None)
-        self.dismiss(self.result)
+        await self.dismiss(self.result)
 
 
 class ClusterSwitchModal(ModalScreen):
@@ -452,14 +453,14 @@ class ClusterSwitchModal(ModalScreen):
     @on(Button.Pressed, "#switch-btn")
     def switch_pressed(self):
         """Handle switch button press"""
-        selected_cluster = self.query_one("#cluster-select").value
+        selected_cluster = self.query_one("#cluster-select", Select).value
         self.result = ("switch", selected_cluster)
         self.dismiss(self.result)
 
     @on(Button.Pressed, "#test-btn")
     def test_pressed(self):
         """Handle test connection button press"""
-        selected_cluster = self.query_one("#cluster-select").value
+        selected_cluster = self.query_one("#cluster-select", Select).value
         self.result = ("test", selected_cluster)
         self.dismiss(self.result)
 
@@ -469,7 +470,7 @@ class ClusterSwitchModal(ModalScreen):
         self.result = ("cancel", None)
         self.dismiss(self.result)
 
-    def action_dismiss(self):
+    async def action_dismiss(self, result=None):
         """Handle escape key - same as cancel"""
         self.result = ("cancel", None)
-        self.dismiss(self.result)
+        await self.dismiss(self.result)
