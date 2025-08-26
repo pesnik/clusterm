@@ -1,0 +1,17 @@
+app:
+  auto_refresh: true
+  log_level: INFO
+  refresh_interval: 30
+  theme: dark
+k8s:
+  base_path: /root/.clusterm/k8s
+  default_namespace: default
+  helm_timeout: 60
+  kubectl_timeout: 30
+plugins:
+  enabled: []
+  plugin_paths: []
+ui:
+  log_max_lines: 5000
+  show_timestamps: true
+  table_max_rows: 1000

@@ -50,7 +50,7 @@ $command-pad-button-width: 12;
     margin-top: $command-pad-spacing;
     margin-bottom: $command-pad-spacing;
     padding: 0 $command-pad-spacing;
-    background: $surface-variant;
+    background: $surface;
 }
 
 .command-pad-button {
@@ -70,11 +70,11 @@ $command-pad-button-width: 12;
 }
 
 .command-pad-button-primary:hover {
-    background: $primary-lighten-1;
+    background: $primary-darken-1;
 }
 
 .command-pad-button-secondary {
-    background: $surface-lighten-1;
+    background: $surface-darken-1;
     color: $text;
 }
 
@@ -84,7 +84,7 @@ $command-pad-button-width: 12;
 }
 
 .command-pad-button-danger:hover {
-    background: $error-lighten-1;
+    background: $error-darken-1;
 }
 
 /* CommandPad Stats */

@@ -65,9 +65,11 @@ class CommandPad(Widget):
         
         # Action buttons with CommandPad-specific styling
         with Horizontal(classes="command-pad-actions"):
-            yield Button("Execute", id="use-btn", classes="command-pad-button command-pad-button-primary")
-            yield Button("Copy", id="copy-btn", classes="command-pad-button command-pad-button-secondary")
-            yield Button("Delete", id="delete-btn", classes="command-pad-button command-pad-button-danger")
+            yield Button("➕ Add", id="add-btn", classes="command-pad-button command-pad-button-secondary")
+            yield Button("✏️ Edit", id="edit-btn", classes="command-pad-button command-pad-button-secondary")
+            yield Button("▶ Execute", id="use-btn", classes="command-pad-button command-pad-button-primary")
+            yield Button("📋 Copy", id="copy-btn", classes="command-pad-button command-pad-button-secondary")
+            yield Button("🗑️ Delete", id="delete-btn", classes="command-pad-button command-pad-button-danger")
     
     def on_mount(self):
         """Setup the modern command pad"""
@@ -117,6 +119,13 @@ class CommandPad(Widget):
                 if self.logger:
                     self.logger.warning("pyperclip not available - cannot copy to clipboard")
     
+    @on(Button.Pressed, "#add-btn")
+    def add_new_command(self):
+        """Add new command"""
+        # TODO: Implement command adding dialog
+        if self.logger:
+            self.logger.info("Add new command requested")
+    
     @on(Button.Pressed, "#edit-btn") 
     def edit_selected_command(self):
         """Edit selected command"""
@@ -142,14 +151,18 @@ class CommandPad(Widget):
         """Handle row selection"""
         # Enable/disable buttons based on selection
         try:
-            use_btn = self.query_one("#use-btn", Button)
+            add_btn = self.query_one("#add-btn", Button)
             edit_btn = self.query_one("#edit-btn", Button)
+            use_btn = self.query_one("#use-btn", Button)
             copy_btn = self.query_one("#copy-btn", Button) 
             delete_btn = self.query_one("#delete-btn", Button)
             
             has_selection = event.cursor_row is not None
-            use_btn.disabled = not has_selection
+            # Add button is always enabled (doesn't require selection)
+            add_btn.disabled = False
+            # Other buttons require selection
             edit_btn.disabled = not has_selection
+            use_btn.disabled = not has_selection
             copy_btn.disabled = not has_selection
             delete_btn.disabled = not has_selection
         except Exception:
@@ -366,14 +379,18 @@ class CommandPad(Widget):
     def _update_action_buttons(self, command_count: int):
         """Update action button states"""
         try:
-            use_btn = self.query_one("#use-btn", Button)
+            add_btn = self.query_one("#add-btn", Button)
             edit_btn = self.query_one("#edit-btn", Button) 
+            use_btn = self.query_one("#use-btn", Button)
             copy_btn = self.query_one("#copy-btn", Button)
             delete_btn = self.query_one("#delete-btn", Button)
             
             has_commands = command_count > 0
-            use_btn.disabled = not has_commands
+            # Add button is always enabled
+            add_btn.disabled = False
+            # Other buttons require commands and selection
             edit_btn.disabled = not has_commands
+            use_btn.disabled = not has_commands
             copy_btn.disabled = not has_commands
             delete_btn.disabled = not has_commands
         except Exception:

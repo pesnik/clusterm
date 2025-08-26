@@ -27,6 +27,7 @@ class ClustermApp(App):
         Path(__file__).parent / "styles" / "components" / "panels.tcss",
         Path(__file__).parent / "styles" / "components" / "modals.tcss",
         Path(__file__).parent / "styles" / "components" / "command-input.tcss",
+        Path(__file__).parent / "styles" / "components" / "command-pad.tcss",
     ]
     
     BINDINGS = [
