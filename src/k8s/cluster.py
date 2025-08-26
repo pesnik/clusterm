@@ -30,6 +30,7 @@ class ClusterManager:
         for cluster_dir in self.clusters_path.iterdir():
             if cluster_dir.is_dir():
                 kubeconfig_files = (
+                    list(cluster_dir.glob("kubeconfig")) +
                     list(cluster_dir.glob("*kubeconfig*.yaml")) +
                     list(cluster_dir.glob("*kubeconfig*.yml")) +
                     list(cluster_dir.glob("config"))

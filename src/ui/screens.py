@@ -223,8 +223,8 @@ class MainScreen(Screen):
             charts_table.add_columns("Chart", "Version", "Description")
 
             self.logger.debug("MainScreen._setup_charts_table: Getting available charts from k8s_manager")
-            charts = self.k8s_manager.get_available_charts()
-            self.logger.debug(f"MainScreen._setup_charts_table: Retrieved {len(charts)} charts")
+            charts = self.k8s_manager.get_available_charts(self.current_namespace)
+            self.logger.debug(f"MainScreen._setup_charts_table: Retrieved {len(charts)} charts for namespace {self.current_namespace}")
 
             for i, chart in enumerate(charts):
                 self.logger.debug(f"MainScreen._setup_charts_table: Processing chart {i+1}/{len(charts)}: {chart.get('name', 'unknown')}")

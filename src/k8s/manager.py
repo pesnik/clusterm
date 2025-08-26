@@ -28,9 +28,12 @@ class K8sManager:
         # Setup paths
         base_path = Path(config.get("k8s.base_path", Path.home() / ".clusterm" / "k8s"))
         self.k8s_path = base_path
-        self.helm_charts_path = self.k8s_path / "projects" / "helm-charts"
+        
+        # Initialize cluster-aware project paths (will be set based on current context)
+        self.current_cluster_path = None
+        self.current_projects_path = None
 
-        self.logger.debug(f"K8sManager.__init__: Paths configured - base: {base_path}, charts: {self.helm_charts_path}")
+        self.logger.debug(f"K8sManager.__init__: Paths configured - base: {base_path}")
 
         # Ensure directories exist
         self.logger.debug("K8sManager.__init__: Ensuring directory structure")
@@ -70,11 +73,9 @@ class K8sManager:
                 self.k8s_path,
                 self.k8s_path / "clusters",
                 self.k8s_path / "tools",
-                self.k8s_path / "projects",
-                self.helm_charts_path,
             ]
 
-            self.logger.debug(f"K8sManager._ensure_directory_structure: Creating {len(directories)} directories")
+            self.logger.debug(f"K8sManager._ensure_directory_structure: Creating {len(directories)} base directories")
 
             for i, directory in enumerate(directories):
                 self.logger.debug(f"K8sManager._ensure_directory_structure: Creating directory {i+1}/{len(directories)}: {directory}")
@@ -101,7 +102,7 @@ class K8sManager:
             })
 
     def _create_example_structure(self):
-        """Create example configuration structure for first-time users"""
+        """Create example cluster-aware configuration structure for first-time users"""
         self.logger.debug("K8sManager._create_example_structure: Entry - Creating example configuration")
 
         try:
@@ -109,6 +110,15 @@ class K8sManager:
             example_cluster = self.k8s_path / "clusters" / "example-cluster"
             self.logger.debug(f"K8sManager._create_example_structure: Creating example cluster directory: {example_cluster}")
             example_cluster.mkdir(exist_ok=True)
+
+            # Create cluster projects structure
+            projects_dir = example_cluster / "projects"
+            default_ns = projects_dir / "default"
+            monitoring_ns = projects_dir / "monitoring"
+            
+            projects_dir.mkdir(exist_ok=True)
+            default_ns.mkdir(exist_ok=True)
+            monitoring_ns.mkdir(exist_ok=True)
 
             # Create example kubeconfig with instructions
             kubeconfig_example = example_cluster / "kubeconfig.example"
@@ -118,7 +128,9 @@ class K8sManager:
 #    ln -s ~/.kube/config kubeconfig
 #
 # You can have multiple cluster directories under ~/.clusterm/k8s/clusters/
-# Each cluster directory should contain a 'kubeconfig' file
+# Each cluster directory should contain:
+# - kubeconfig file
+# - projects/ directory with namespace-specific projects
 
 apiVersion: v1
 kind: Config
@@ -158,25 +170,25 @@ Place your kubectl and helm binaries here, or ensure they're in your system PATH
 - helm: https://helm.sh/docs/intro/install/
 """)
 
-            # Create example helm chart
-            example_chart = self.helm_charts_path / "example-app"
+            # Create example helm chart in default namespace
+            example_chart = default_ns / "nginx-app"
             example_chart.mkdir(exist_ok=True)
 
             chart_yaml = example_chart / "Chart.yaml"
             chart_yaml.write_text("""apiVersion: v2
-name: example-app
-description: An example Helm chart for Clusterm
+name: nginx-app
+description: Example nginx application for default namespace
 version: 1.0.0
-appVersion: 1.0.0
+appVersion: 1.21.0
 """)
 
             values_yaml = example_chart / "values.yaml"
-            values_yaml.write_text("""# Example values file
+            values_yaml.write_text("""# Example values file for nginx-app
 replicaCount: 1
 
 image:
   repository: nginx
-  tag: latest
+  tag: 1.21.0
   pullPolicy: IfNotPresent
 
 service:
@@ -185,11 +197,94 @@ service:
 
 ingress:
   enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: nginx-app.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
 
 resources: {}
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
 """)
 
-            self.logger.info("K8sManager._create_example_structure: Created example configuration structure successfully")
+            # Create monitoring chart in monitoring namespace
+            monitoring_chart = monitoring_ns / "prometheus-stack"
+            monitoring_chart.mkdir(exist_ok=True)
+
+            monitoring_chart_yaml = monitoring_chart / "Chart.yaml"
+            monitoring_chart_yaml.write_text("""apiVersion: v2
+name: prometheus-stack
+description: Prometheus monitoring stack for cluster observability
+version: 1.0.0
+appVersion: 2.45.0
+""")
+
+            monitoring_values = monitoring_chart / "values.yaml"
+            monitoring_values.write_text("""# Prometheus monitoring stack values
+prometheus:
+  enabled: true
+  retention: "15d"
+  resources:
+    requests:
+      memory: 1Gi
+      cpu: 100m
+
+grafana:
+  enabled: true
+  adminPassword: "admin123"
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 100m
+
+alertmanager:
+  enabled: true
+  resources:
+    requests:
+      memory: 128Mi
+      cpu: 50m
+""")
+
+            # Create README for the structure
+            structure_readme = example_cluster / "README.md"
+            structure_readme.write_text("""# Example Cluster Structure
+
+This directory contains cluster-specific configuration and projects.
+
+## Structure
+```
+example-cluster/
+├── kubeconfig.example          # Cluster connection config
+├── projects/                   # Namespace-organized projects
+│   ├── default/               # Default namespace projects
+│   │   └── nginx-app/         # Example web application
+│   └── monitoring/            # Monitoring namespace projects  
+│       └── prometheus-stack/  # Monitoring infrastructure
+└── README.md                  # This file
+```
+
+## Getting Started
+1. Rename `kubeconfig.example` to `kubeconfig` and configure with your cluster details
+2. Projects are organized by namespace for better context awareness
+3. Each project directory contains Helm charts specific to that cluster/namespace
+4. Use Clusterm's context selector to switch between clusters and namespaces
+
+## Benefits
+- **Context Awareness**: Projects are filtered by selected cluster/namespace
+- **Reduced Noise**: Only see relevant projects for current context
+- **Environment Safety**: Prevents accidental cross-environment deployments
+- **Team Organization**: Clear separation of responsibilities
+""")
+
+            self.logger.info("K8sManager._create_example_structure: Created cluster-aware example structure successfully")
 
         except Exception as e:
             self.logger.error(f"K8sManager._create_example_structure: Failed to create example structure: {e}", extra={
@@ -209,8 +304,12 @@ resources: {}
                 initial_cluster = clusters[0]["name"]
                 self.logger.info(f"K8sManager._setup_initial_cluster: Setting initial cluster to: {initial_cluster}")
                 self.cluster_manager.set_current_cluster(initial_cluster)
+                # Set up initial paths
+                self._update_cluster_paths(initial_cluster)
             elif self.cluster_manager.current_cluster:
                 self.logger.debug(f"K8sManager._setup_initial_cluster: Current cluster already set: {self.cluster_manager.current_cluster}")
+                # Ensure paths are set for current cluster
+                self._update_cluster_paths(self.cluster_manager.current_cluster)
             else:
                 self.logger.warning("K8sManager._setup_initial_cluster: No clusters available")
 
@@ -234,6 +333,9 @@ resources: {}
                 self.logger.debug("K8sManager._on_cluster_changed: Setting kubeconfig for command executor")
                 self.command_executor.set_kubeconfig(kubeconfig)
 
+                # Update cluster-aware paths
+                self._update_cluster_paths(new_cluster)
+
                 self.logger.info(f"K8sManager._on_cluster_changed: Successfully processed cluster change to: {new_cluster}")
 
             except Exception as e:
@@ -244,26 +346,54 @@ resources: {}
         else:
             self.logger.warning("K8sManager._on_cluster_changed: No new_cluster provided in event data")
 
-    def get_available_charts(self) -> list[dict[str, str]]:
-        """Get list of available Helm charts"""
-        self.logger.debug("K8sManager.get_available_charts: Entry")
+    def _update_cluster_paths(self, cluster_name: str):
+        """Update cluster-aware project paths when cluster changes"""
+        self.logger.debug(f"K8sManager._update_cluster_paths: Updating paths for cluster: {cluster_name}")
+        
+        self.current_cluster_path = self.k8s_path / "clusters" / cluster_name
+        self.current_projects_path = self.current_cluster_path / "projects"
+        
+        # Ensure projects directory exists
+        self.current_projects_path.mkdir(parents=True, exist_ok=True)
+        
+        self.logger.debug(f"K8sManager._update_cluster_paths: Updated paths - cluster: {self.current_cluster_path}, projects: {self.current_projects_path}")
+
+    def get_current_namespace_projects_path(self, namespace: str = "default") -> Path | None:
+        """Get the projects path for the current cluster and namespace"""
+        if not self.current_projects_path:
+            self.logger.warning("K8sManager.get_current_namespace_projects_path: No current cluster set")
+            return None
+            
+        namespace_path = self.current_projects_path / namespace
+        namespace_path.mkdir(parents=True, exist_ok=True)
+        
+        return namespace_path
+
+    def get_available_charts(self, namespace: str = "default") -> list[dict[str, str]]:
+        """Get list of available Helm charts for current cluster and namespace"""
+        self.logger.debug(f"K8sManager.get_available_charts: Entry - namespace: {namespace}")
 
         charts = []
-        if not self.helm_charts_path.exists():
-            self.logger.warning(f"K8sManager.get_available_charts: Helm charts directory not found: {self.helm_charts_path}")
+        
+        # Get namespace projects path for current cluster
+        namespace_path = self.get_current_namespace_projects_path(namespace)
+        if not namespace_path or not namespace_path.exists():
+            self.logger.warning(f"K8sManager.get_available_charts: Projects directory not found for namespace: {namespace}")
             return charts
 
-        self.logger.debug(f"K8sManager.get_available_charts: Scanning charts directory: {self.helm_charts_path}")
+        self.logger.debug(f"K8sManager.get_available_charts: Scanning charts in: {namespace_path}")
 
-        chart_dirs = list(self.helm_charts_path.iterdir())
-        self.logger.debug(f"K8sManager.get_available_charts: Found {len(chart_dirs)} items in charts directory")
+        chart_dirs = [d for d in namespace_path.iterdir() if d.is_dir()]
+        self.logger.debug(f"K8sManager.get_available_charts: Found {len(chart_dirs)} potential chart directories")
 
         for i, chart_dir in enumerate(chart_dirs):
-            if chart_dir.is_dir() and (chart_dir / "Chart.yaml").exists():
+            if (chart_dir / "Chart.yaml").exists():
                 self.logger.debug(f"K8sManager.get_available_charts: Processing chart {i+1}/{len(chart_dirs)}: {chart_dir.name}")
                 chart_info = {
                     "name": chart_dir.name,
                     "path": str(chart_dir),
+                    "namespace": namespace,
+                    "cluster": self.cluster_manager.current_cluster or "unknown",
                     "description": "No description",
                     "version": "unknown",
                 }
@@ -274,6 +404,7 @@ resources: {}
                         chart_yaml = yaml.safe_load(f)
                         chart_info["description"] = chart_yaml.get("description", "No description")
                         chart_info["version"] = chart_yaml.get("version", "unknown")
+                        chart_info["app_version"] = chart_yaml.get("appVersion", "unknown")
 
                     self.logger.debug(f"K8sManager.get_available_charts: Chart {chart_dir.name} - version: {chart_info['version']}, desc: {chart_info['description'][:50]}...")
 
@@ -283,22 +414,30 @@ resources: {}
                 charts.append(chart_info)
                 self.logger.debug(f"K8sManager.get_available_charts: Added chart: {chart_dir.name}")
             else:
-                self.logger.debug(f"K8sManager.get_available_charts: Skipping {chart_dir.name} - not a valid chart directory")
+                self.logger.debug(f"K8sManager.get_available_charts: Skipping {chart_dir.name} - no Chart.yaml found")
 
-        self.logger.info(f"K8sManager.get_available_charts: Found {len(charts)} available charts")
+        self.logger.info(f"K8sManager.get_available_charts: Found {len(charts)} charts in {namespace} namespace")
         return charts
 
     def deploy_chart(self, chart_name: str, config: dict) -> tuple[bool, str]:
-        """Deploy a Helm chart with given configuration"""
+        """Deploy a Helm chart with given configuration from current cluster/namespace context"""
         self.logger.debug(f"K8sManager.deploy_chart: Entry - Deploying chart: {chart_name} with config: {config}")
 
-        chart_path = self.helm_charts_path / chart_name
+        namespace = config.get("namespace", "default")
+        
+        # Find chart in current cluster/namespace context
+        namespace_path = self.get_current_namespace_projects_path(namespace)
+        if not namespace_path:
+            self.logger.error(f"K8sManager.deploy_chart: No current cluster set")
+            return False, "No current cluster configured"
+            
+        chart_path = namespace_path / chart_name
         if not chart_path.exists():
             self.logger.error(f"K8sManager.deploy_chart: Chart not found: {chart_name} at path: {chart_path}")
-            return False, f"Chart {chart_name} not found"
+            cluster_name = self.cluster_manager.current_cluster or "unknown"
+            return False, f"Chart {chart_name} not found in {cluster_name}/{namespace}"
 
         release_name = f"{chart_name}-{config.get('environment', 'default')}"
-        namespace = config.get("namespace", "default")
 
         self.logger.info(f"K8sManager.deploy_chart: Deploying {chart_name} as release {release_name} to namespace {namespace}")
 
@@ -345,6 +484,8 @@ resources: {}
                 chart_name=chart_name,
                 release_name=release_name,
                 action="deployed",
+                cluster=self.cluster_manager.current_cluster,
+                namespace=namespace,
             )
         else:
             self.logger.error(f"K8sManager.deploy_chart: Failed to deploy {chart_name}: {output}", extra={
@@ -352,6 +493,7 @@ resources: {}
                 "release_name": release_name,
                 "namespace": namespace,
                 "config": config,
+                "cluster": self.cluster_manager.current_cluster,
             })
 
         return success, output

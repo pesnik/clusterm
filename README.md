@@ -75,16 +75,19 @@ On first launch, Clusterm creates:
 ### 2. **Configure Your Clusters**
 ```bash
 # Option 1: Copy existing kubeconfig
+mkdir -p ~/.clusterm/k8s/clusters/my-cluster
 cp ~/.kube/config ~/.clusterm/k8s/clusters/my-cluster/kubeconfig
 
 # Option 2: Create symlink to existing config
 mkdir -p ~/.clusterm/k8s/clusters/my-cluster
 ln -s ~/.kube/config ~/.clusterm/k8s/clusters/my-cluster/kubeconfig
 
-# Option 3: Multiple clusters
-mkdir -p ~/.clusterm/k8s/clusters/production
-mkdir -p ~/.clusterm/k8s/clusters/staging
-# Copy respective kubeconfig files to each directory
+# Option 3: Multiple clusters with project organization
+mkdir -p ~/.clusterm/k8s/clusters/production/projects/{default,monitoring,ingress}
+mkdir -p ~/.clusterm/k8s/clusters/staging/projects/{default,development}
+# Copy respective kubeconfig files to each cluster directory
+cp ~/.kube/prod-config ~/.clusterm/k8s/clusters/production/kubeconfig  
+cp ~/.kube/staging-config ~/.clusterm/k8s/clusters/staging/kubeconfig
 ```
 
 ### 3. **Tool Installation**
@@ -226,35 +229,76 @@ Clusterm automatically creates and manages a directory structure for Kubernetes 
 - Example configurations and README files are generated
 - Directory structure is fully customizable via configuration
 
-**Default Structure:**
+**Cluster-Aware Structure:**
 ```
 ~/.clusterm/k8s/             # Base K8s directory (configurable)
 ├── clusters/                # Cluster configurations  
 │   ├── example-cluster/     # Auto-created example
-│   │   └── kubeconfig.example  # Instructions for setup
-│   ├── production/          # Your cluster directories
-│   │   └── kubeconfig       # Real kubeconfig files
-│   └── staging/
-│       └── kubeconfig
-├── tools/                   # Optional: Local binary tools
-│   ├── kubectl              # Falls back to system PATH
-│   ├── helm                 # Falls back to system PATH  
-│   └── README.md            # Setup instructions
-└── projects/
-    └── helm-charts/         # Helm charts
-        ├── example-app/     # Auto-created example
-        │   ├── Chart.yaml
-        │   └── values.yaml
-        └── your-app/        # Your actual charts
-            ├── Chart.yaml
-            └── values.yaml
+│   │   ├── kubeconfig.example  # Instructions for setup
+│   │   ├── projects/           # Namespace-organized projects
+│   │   │   ├── default/       # Default namespace projects
+│   │   │   │   └── nginx-app/ # Example web application
+│   │   │   └── monitoring/    # Monitoring namespace projects  
+│   │   │       └── prometheus-stack/ # Monitoring infrastructure
+│   │   └── README.md          # Cluster-specific documentation
+│   ├── production/          # Production cluster
+│   │   ├── kubeconfig       # Production kubeconfig
+│   │   └── projects/        # Production projects
+│   │       ├── default/     # Production default namespace
+│   │       │   ├── api-gateway/
+│   │       │   └── web-frontend/
+│   │       ├── monitoring/  # Production monitoring
+│   │       │   ├── prometheus/
+│   │       │   └── grafana/
+│   │       └── ingress/     # Production ingress
+│   │           └── nginx-ingress/
+│   └── staging/             # Staging cluster
+│       ├── kubeconfig       # Staging kubeconfig  
+│       └── projects/        # Staging projects
+│           ├── default/     # Staging default namespace
+│           │   └── test-app/
+│           └── development/ # Development namespace
+│               └── debug-tools/
+└── tools/                   # Optional: Local binary tools
+    ├── kubectl              # Falls back to system PATH
+    ├── helm                 # Falls back to system PATH  
+    └── README.md            # Setup instructions
 ```
+
+**Benefits of Cluster-Aware Structure:**
+
+✅ **Context Filtering**: Only show projects relevant to current cluster/namespace selection  
+✅ **Reduced Noise**: No irrelevant projects cluttering your workspace  
+✅ **Environment Safety**: Prevents accidental cross-environment deployments  
+✅ **Team Organization**: Clear separation of responsibilities and environments  
+✅ **Professional Structure**: Industry-standard cluster/namespace organization  
 
 **Path Configuration:**
 ```yaml
 k8s:
   base_path: "/your/custom/path"  # Default: ~/.clusterm/k8s
 ```
+
+### Working with Projects
+
+**Adding Projects to Specific Contexts:**
+```bash
+# Add a chart to production/default namespace
+mkdir -p ~/.clusterm/k8s/clusters/production/projects/default/my-api
+# Copy your Helm chart files here
+
+# Add monitoring stack to production/monitoring namespace  
+mkdir -p ~/.clusterm/k8s/clusters/production/projects/monitoring/prometheus
+# Copy monitoring charts here
+
+# Development projects in staging cluster
+mkdir -p ~/.clusterm/k8s/clusters/staging/projects/development/test-service
+```
+
+**Context-Aware Project Discovery:**
+- Select `production` cluster + `default` namespace → see only production default projects
+- Select `staging` cluster + `development` namespace → see only staging development projects  
+- No more scrolling through irrelevant charts for other environments
 
 ## Configuration
 
@@ -426,8 +470,9 @@ mypy src
    - Check cluster connectivity: `kubectl cluster-info`
 
 4. **Charts not showing**: 
-   - Ensure Helm charts are in `~/.clusterm/k8s/projects/helm-charts/`
+   - Charts are now organized by cluster and namespace: `~/.clusterm/k8s/clusters/{cluster}/projects/{namespace}/{chart}/`
    - Each chart needs `Chart.yaml` and `values.yaml`
+   - Charts only appear when the matching cluster/namespace is selected
 
 ### Debug Mode
 
@@ -468,7 +513,13 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - [x] **Context-Aware Completions** - Resource names and command suggestions
 - [x] **Syntax Highlighting & Validation** - Enhanced command experience
 
-### Version 0.4.0 (Planned)
+### Version 0.4.0 🚧 In Progress
+- [x] **Cluster-Aware Project Structure** - Context-based project organization
+- [x] **Environment Safety** - Prevent cross-environment deployment accidents
+- [ ] **Project Migration Tools** - Migrate existing projects to new structure
+- [ ] **Enhanced Project Management** - Create, edit, and organize projects within app
+
+### Version 0.5.0 (Planned)
 - [ ] Resource editing capabilities
 - [ ] Custom resource definitions (CRDs) support
 - [ ] Enhanced filtering and searching
