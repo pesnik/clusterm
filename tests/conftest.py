@@ -2,12 +2,12 @@
 Pytest configuration and fixtures
 """
 
+
 import pytest
-from pathlib import Path
-from unittest.mock import Mock
+
 from src.core.config import Config
-from src.core.logger import Logger
 from src.core.events import EventBus
+from src.core.logger import Logger
 
 
 @pytest.fixture
@@ -42,24 +42,24 @@ def mock_k8s_paths(tmp_path):
     """Mock K8s directory structure"""
     k8s_path = tmp_path / "k8s"
     k8s_path.mkdir()
-    
+
     # Create clusters directory
     clusters_path = k8s_path / "clusters"
     clusters_path.mkdir()
-    
+
     # Create tools directory
     tools_path = k8s_path / "tools"
     tools_path.mkdir()
-    
+
     # Create mock kubectl
     kubectl = tools_path / "kubectl"
     kubectl.write_text("#!/bin/bash\necho 'mock kubectl'")
     kubectl.chmod(0o755)
-    
+
     # Create helm charts directory
     charts_path = k8s_path / "projects" / "helm-charts"
     charts_path.mkdir(parents=True)
-    
+
     return {
         "k8s_path": k8s_path,
         "clusters_path": clusters_path,

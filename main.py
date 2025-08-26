@@ -6,6 +6,7 @@ A modular, extensible interface for managing Kubernetes deployments
 
 import sys
 from pathlib import Path
+
 from src.ui.app import ClustermApp
 
 
@@ -15,7 +16,7 @@ def main():
     config_path = None
     if len(sys.argv) > 1:
         config_path = Path(sys.argv[1])
-    
+
     # Create and run the application
     try:
         app = ClustermApp(config_path)

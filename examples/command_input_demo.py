@@ -7,26 +7,29 @@ Showcases the production-grade prompt_toolkit integration
 import asyncio
 import sys
 from pathlib import Path
+
 sys.path.append(str(Path(__file__).parent.parent))
 
-from src.ui.components.command_input import KubectlHelmCompleter, KubectlHelmValidator
-from src.core.live_completions import LiveCompletionProvider
-from src.core.command_history import CommandHistoryManager
+import tempfile
+from pathlib import Path
+
 from prompt_toolkit import PromptSession
 from prompt_toolkit.completion import CompleteEvent
 from prompt_toolkit.document import Document
 from prompt_toolkit.styles import Style
-from pathlib import Path
-import tempfile
+
+from src.core.command_history import CommandHistoryManager
+from src.core.live_completions import LiveCompletionProvider
+from src.ui.components.command_input import KubectlHelmCompleter, KubectlHelmValidator
 
 
 class MockK8sManager:
     """Mock K8s manager for demo purposes"""
-    
+
     def __init__(self):
         self.current_namespace = "default"
         self.cluster_manager = MockClusterManager()
-    
+
     def get_namespaces(self):
         return [
             {"metadata": {"name": "default"}},
@@ -35,7 +38,7 @@ class MockK8sManager:
             {"metadata": {"name": "development"}},
             {"metadata": {"name": "staging"}}
         ]
-    
+
     def get_pods(self, namespace=None):
         return [
             {"metadata": {"name": "nginx-deployment-7d5c4f5b8c-abc123"}},
@@ -43,7 +46,7 @@ class MockK8sManager:
             {"metadata": {"name": "postgres-db-5a7b6c8d9f-ghi789"}},
             {"metadata": {"name": "api-server-8c9d0e1f2a-jkl012"}}
         ]
-    
+
     def get_services(self, namespace=None):
         return [
             {"metadata": {"name": "nginx-service"}},
@@ -51,7 +54,7 @@ class MockK8sManager:
             {"metadata": {"name": "postgres-service"}},
             {"metadata": {"name": "api-service"}}
         ]
-    
+
     def get_deployments(self):
         return [
             {"metadata": {"name": "nginx-deployment"}},
@@ -59,7 +62,7 @@ class MockK8sManager:
             {"metadata": {"name": "postgres-db"}},
             {"metadata": {"name": "api-server"}}
         ]
-    
+
     def get_helm_releases(self):
         return [
             {"name": "my-nginx"},
@@ -71,7 +74,7 @@ class MockK8sManager:
 
 class MockClusterManager:
     """Mock cluster manager for demo"""
-    
+
     def get_current_cluster(self):
         return {"name": "demo-cluster"}
 
@@ -80,12 +83,12 @@ def demo_completions():
     """Demo the completion system"""
     print("🧠 Intelligent Command Input - Completion Demo")
     print("=" * 50)
-    
+
     # Create mock components
     with tempfile.TemporaryDirectory() as tmpdir:
         history_manager = CommandHistoryManager(Path(tmpdir))
         k8s_manager = MockK8sManager()
-        
+
         # Add some sample commands to history
         sample_commands = [
             "kubectl get pods --all-namespaces",
@@ -95,13 +98,13 @@ def demo_completions():
             "helm status my-nginx",
             "kubectl get services -n production"
         ]
-        
+
         for cmd in sample_commands:
             history_manager.add_command(cmd, f"Demo command: {cmd}")
-        
+
         # Create completer
         completer = KubectlHelmCompleter(history_manager, k8s_manager)
-        
+
         # Test various completion scenarios
         test_cases = [
             ("", "Empty input - should suggest common commands"),
@@ -114,15 +117,15 @@ def demo_completions():
             ("kubectl get pods -n ", "kubectl get pods -n - should suggest namespaces"),
             ("kubectl get pods -o ", "kubectl get pods -o - should suggest output formats")
         ]
-        
+
         for input_text, description in test_cases:
             print(f"\n📝 Test: {description}")
             print(f"   Input: '{input_text}'")
-            
+
             # Create document and get completions
             document = Document(input_text, len(input_text))
             completions = list(completer.get_completions(document, CompleteEvent()))
-            
+
             print(f"   Completions ({len(completions)}):")
             for i, completion in enumerate(completions[:5]):  # Show first 5
                 print(f"     {i+1}. {completion.text}")
@@ -134,10 +137,10 @@ def demo_validation():
     """Demo the validation system"""
     print("\n🔍 Intelligent Command Input - Validation Demo")
     print("=" * 50)
-    
+
     k8s_manager = MockK8sManager()
     validator = KubectlHelmValidator(k8s_manager)
-    
+
     test_cases = [
         ("kubectl get pods", "✅ Valid kubectl command"),
         ("helm list", "✅ Valid helm command"),
@@ -147,11 +150,11 @@ def demo_validation():
         ("random-command", "❌ Unknown command"),
         ("kubectl", "⚠️ Incomplete command")
     ]
-    
+
     for command, expected in test_cases:
         print(f"\n📝 Test: {expected}")
         print(f"   Command: '{command}'")
-        
+
         document = Document(command)
         try:
             validator.validate(document)
@@ -173,12 +176,12 @@ async def demo_interactive_session():
     print("  • Syntax highlighting")
     print("\nType 'exit' or press Ctrl+C to quit")
     print("-" * 50)
-    
+
     # Setup components
     with tempfile.TemporaryDirectory() as tmpdir:
         history_manager = CommandHistoryManager(Path(tmpdir))
         k8s_manager = MockK8sManager()
-        
+
         # Pre-populate with realistic commands
         realistic_commands = [
             "kubectl get pods --all-namespaces",
@@ -192,14 +195,14 @@ async def demo_interactive_session():
             "kubectl get nodes -o wide",
             "kubectl top pods --sort-by=memory"
         ]
-        
+
         for cmd in realistic_commands:
             history_manager.add_command(cmd)
-        
+
         # Create intelligent session
         completer = KubectlHelmCompleter(history_manager, k8s_manager)
         validator = KubectlHelmValidator(k8s_manager)
-        
+
         style = Style.from_dict({
             'command': '#00aa00 bold',      # Green for kubectl/helm
             'subcommand': '#0066cc bold',   # Blue for subcommands
@@ -208,7 +211,7 @@ async def demo_interactive_session():
             'error': '#cc0000 bold',        # Red for errors
             'suggestion': '#666666 italic'  # Gray for suggestions
         })
-        
+
         session = PromptSession(
             message=[('class:command', '🧠 clusterm> ')],
             completer=completer,
@@ -220,29 +223,29 @@ async def demo_interactive_session():
             enable_history_search=True,
             search_ignore_case=True
         )
-        
+
         try:
             while True:
                 try:
                     command = await session.prompt_async()
                     command = command.strip()
-                    
+
                     if command.lower() in ['exit', 'quit']:
                         break
-                    
+
                     if command:
                         print(f"✅ Would execute: {command}")
                         # Add to history for future completions
                         history_manager.add_command(command)
-                    
+
                 except KeyboardInterrupt:
                     break
                 except EOFError:
                     break
-        
+
         except Exception as e:
             print(f"Session error: {e}")
-        
+
         print("\n👋 Interactive session ended")
 
 
@@ -250,22 +253,22 @@ def demo_live_completions():
     """Demo the live completion provider"""
     print("\n📡 Live Completions Provider Demo")
     print("=" * 50)
-    
+
     k8s_manager = MockK8sManager()
     provider = LiveCompletionProvider(k8s_manager)
-    
+
     print("Context Information:")
     context = provider.get_context_info()
     for key, value in context.items():
         print(f"  {key}: {value}")
-    
+
     print("\nAvailable Completions:")
-    
+
     resource_types = ['pods', 'services', 'deployments', 'namespaces']
     for resource_type in resource_types:
         completions = provider.get_completions(resource_type)
         print(f"  {resource_type}: {', '.join(completions[:3])}{'...' if len(completions) > 3 else ''}")
-    
+
     print(f"\nKubectl Resources: {len(provider.get_kubectl_resources())} available")
     print(f"Output Formats: {', '.join(provider.get_output_formats()[:5])}...")
     print(f"Field Selectors: {', '.join(provider.get_field_selectors()[:3])}...")
@@ -278,12 +281,12 @@ def main():
     print("This demonstrates the production-grade prompt_toolkit integration")
     print("with real-time completions, validation, and context awareness.")
     print("=" * 70)
-    
+
     # Run demos
     demo_completions()
-    demo_validation() 
+    demo_validation()
     demo_live_completions()
-    
+
     # Ask for interactive demo
     response = input("\n🚀 Would you like to try the interactive demo? (y/N): ")
     if response.lower() == 'y':
@@ -291,7 +294,7 @@ def main():
             asyncio.run(demo_interactive_session())
         except Exception as e:
             print(f"Interactive demo error: {e}")
-    
+
     print("\n✨ Demo completed!")
     print("\nTo use in Clusterm:")
     print("1. Launch Clusterm: python main.py")

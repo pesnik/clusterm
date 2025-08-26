@@ -22,6 +22,12 @@ dev = [
     { name = "ruff" },
 ]
 
+[package.dev-dependencies]
+dev = [
+    { name = "mypy" },
+    { name = "ruff" },
+]
+
 [package.metadata]
 requires-dist = [
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.5.0" },
@@ -35,6 +41,12 @@ requires-dist = [
     { name = "textual", specifier = ">=0.70.0" },
 ]
 provides-extras = ["dev"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "mypy", specifier = ">=1.17.1" },
+    { name = "ruff", specifier = ">=0.12.10" },
+]
 
 [[package]]
 name = "colorama"

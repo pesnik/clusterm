@@ -1,9 +1,8 @@
-"""
-Reusable UI components
+"""Reusable UI components
 """
 
-from .tables import ResourceTable
-from .panels import LogPanel
 from .modals import CommandModal, ConfigModal
+from .panels import LogPanel
+from .tables import ResourceTable
 
-__all__ = ["ResourceTable", "LogPanel", "CommandModal", "ConfigModal"]
+__all__ = ["CommandModal", "ConfigModal", "LogPanel", "ResourceTable"]

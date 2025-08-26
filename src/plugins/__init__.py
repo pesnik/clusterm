@@ -1,8 +1,7 @@
-"""
-Plugin system for ClusterM - enables extensible functionality
+"""Plugin system for ClusterM - enables extensible functionality
 """
 
-from .manager import PluginManager
 from .base import BasePlugin, PluginMetadata
+from .manager import PluginManager
 
-__all__ = ["PluginManager", "BasePlugin", "PluginMetadata"]
+__all__ = ["BasePlugin", "PluginManager", "PluginMetadata"]

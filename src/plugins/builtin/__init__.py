@@ -1,3 +1,2 @@
-"""
-Built-in plugins for ClusterM
+"""Built-in plugins for ClusterM
 """

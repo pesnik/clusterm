@@ -1,10 +1,9 @@
-"""
-Kubernetes management module
+"""Kubernetes management module
 """
 
-from .manager import K8sManager
 from .cluster import ClusterManager
-from .resources import ResourceManager
 from .commands import CommandExecutor
+from .manager import K8sManager
+from .resources import ResourceManager
 
-__all__ = ["K8sManager", "ClusterManager", "ResourceManager", "CommandExecutor"]
+__all__ = ["ClusterManager", "CommandExecutor", "K8sManager", "ResourceManager"]
