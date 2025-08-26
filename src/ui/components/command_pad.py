@@ -120,20 +120,47 @@ class CommandPad(Widget):
                     self.logger.warning("pyperclip not available - cannot copy to clipboard")
     
     @on(Button.Pressed, "#add-btn")
-    def add_new_command(self):
+    async def add_new_command(self):
         """Add new command"""
-        # TODO: Implement command adding dialog
-        if self.logger:
-            self.logger.info("Add new command requested")
+        from .modals import AddCommandModal
+        
+        modal = AddCommandModal()
+        result = await self.app.push_screen(modal)
+        
+        if result and result[0] == "add":
+            command_data = result[1]
+            # Add the command to history
+            self.command_history.add_command(
+                command=command_data["command"],
+                description=command_data["description"],
+                tags=command_data["tags"]
+            )
+            self._refresh_commands()
+            if self.logger:
+                self.logger.info(f"Added new command: {command_data['command']}")
     
     @on(Button.Pressed, "#edit-btn") 
-    def edit_selected_command(self):
+    async def edit_selected_command(self):
         """Edit selected command"""
         selected_cmd = self.get_selected_command()
         if selected_cmd:
-            # TODO: Implement command editing dialog
-            if self.logger:
-                self.logger.info(f"Edit command requested: {selected_cmd.command}")
+            from .modals import EditCommandModal
+            
+            modal = EditCommandModal(selected_cmd)
+            result = await self.app.push_screen(modal)
+            
+            if result and result[0] == "save":
+                command_data = result[1]
+                # Delete old command and add updated one
+                self.command_history.delete_command(command_data["original_command"])
+                self.command_history.add_command(
+                    command=command_data["command"],
+                    description=command_data["description"],
+                    tags=command_data["tags"]
+                )
+                self._refresh_commands()
+                if self.logger:
+                    self.logger.info(f"Updated command: {command_data['command']}")
     
     @on(Button.Pressed, "#delete-btn")
     def delete_selected_command(self):
@@ -462,12 +489,11 @@ class CommandPad(Widget):
     
     def action_edit_selected(self):
         """Edit selected command via keyboard"""
-        self.edit_selected_command()
+        self.run_worker(self.edit_selected_command())
     
     def action_add_command(self):
         """Add new command"""
-        # Signal parent to show add dialog - create a custom message for this
-        pass  # TODO: Implement add command dialog
+        self.run_worker(self.add_new_command())
     
     def action_clear_search(self):
         """Clear search input"""

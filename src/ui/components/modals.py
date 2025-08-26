@@ -205,6 +205,171 @@ class LogModal(ModalScreen):
         self.dismiss()
 
 
+class AddCommandModal(ModalScreen):
+    """Modal for adding new commands to CommandPad"""
+    
+    BINDINGS = [
+        Binding("escape", "dismiss", "Cancel", priority=True),
+    ]
+    
+    def __init__(self):
+        super().__init__()
+        self.result = None
+    
+    def compose(self):
+        """Compose the add command modal"""
+        with Container(classes="modal"):
+            yield Static("➕ Add New Command", classes="modal-title")
+            
+            with Vertical(classes="modal-content"):
+                yield Label("Command:", classes="input-label")
+                yield Input(
+                    placeholder="e.g., kubectl get pods -n production",
+                    id="command-input"
+                )
+                
+                yield Label("Description:", classes="input-label")
+                yield Input(
+                    placeholder="e.g., Get all pods in production namespace",
+                    id="description-input"
+                )
+                
+                yield Label("Tags (comma separated):", classes="input-label")
+                yield Input(
+                    placeholder="e.g., kubectl, pods, production",
+                    id="tags-input"
+                )
+                
+                yield Label("Command Type:", classes="input-label")
+                yield Select([
+                    ("⚡ kubectl", "kubectl"),
+                    ("🚢 Helm", "helm"),
+                    ("🐳 Docker", "docker"),
+                    ("📦 Git", "git"),
+                    ("💻 General", "general")
+                ], value="kubectl", id="type-select")
+            
+            with Horizontal(classes="modal-buttons"):
+                yield Button("➕ Add Command", variant="primary", id="add-btn")
+                yield Button("❌ Cancel (Esc)", variant="default", id="cancel-btn")
+    
+    @on(Button.Pressed, "#add-btn")
+    def add_pressed(self):
+        """Handle add button press"""
+        command = self.query_one("#command-input").value.strip()
+        description = self.query_one("#description-input").value.strip()
+        tags_input = self.query_one("#tags-input").value.strip()
+        command_type = self.query_one("#type-select").value
+        
+        if command:
+            tags = [tag.strip() for tag in tags_input.split(",") if tag.strip()] if tags_input else []
+            self.result = ("add", {
+                "command": command,
+                "description": description or f"Execute {command}",
+                "tags": tags,
+                "command_type": command_type
+            })
+        else:
+            self.result = ("cancel", None)
+        
+        self.dismiss(self.result)
+    
+    @on(Button.Pressed, "#cancel-btn")
+    def cancel_pressed(self):
+        """Handle cancel button press"""
+        self.result = ("cancel", None)
+        self.dismiss(self.result)
+    
+    def action_dismiss(self):
+        """Handle escape key - same as cancel"""
+        self.result = ("cancel", None)
+        self.dismiss(self.result)
+
+
+class EditCommandModal(ModalScreen):
+    """Modal for editing existing commands in CommandPad"""
+    
+    BINDINGS = [
+        Binding("escape", "dismiss", "Cancel", priority=True),
+    ]
+    
+    def __init__(self, command_entry):
+        super().__init__()
+        self.command_entry = command_entry
+        self.result = None
+    
+    def compose(self):
+        """Compose the edit command modal"""
+        with Container(classes="modal"):
+            yield Static("✏️ Edit Command", classes="modal-title")
+            
+            with Vertical(classes="modal-content"):
+                yield Label("Command:", classes="input-label")
+                yield Input(
+                    value=self.command_entry.command,
+                    id="command-input"
+                )
+                
+                yield Label("Description:", classes="input-label")
+                yield Input(
+                    value=self.command_entry.description,
+                    id="description-input"
+                )
+                
+                yield Label("Tags (comma separated):", classes="input-label")
+                tags_value = ", ".join(self.command_entry.tags) if self.command_entry.tags else ""
+                yield Input(
+                    value=tags_value,
+                    id="tags-input"
+                )
+                
+                yield Label("Command Type:", classes="input-label")
+                yield Select([
+                    ("⚡ kubectl", "kubectl"),
+                    ("🚢 Helm", "helm"),
+                    ("🐳 Docker", "docker"),
+                    ("📦 Git", "git"),
+                    ("💻 General", "general")
+                ], value=self.command_entry.command_type or "kubectl", id="type-select")
+            
+            with Horizontal(classes="modal-buttons"):
+                yield Button("💾 Save Changes", variant="primary", id="save-btn")
+                yield Button("❌ Cancel (Esc)", variant="default", id="cancel-btn")
+    
+    @on(Button.Pressed, "#save-btn")
+    def save_pressed(self):
+        """Handle save button press"""
+        command = self.query_one("#command-input").value.strip()
+        description = self.query_one("#description-input").value.strip()
+        tags_input = self.query_one("#tags-input").value.strip()
+        command_type = self.query_one("#type-select").value
+        
+        if command:
+            tags = [tag.strip() for tag in tags_input.split(",") if tag.strip()] if tags_input else []
+            self.result = ("save", {
+                "original_command": self.command_entry.command,
+                "command": command,
+                "description": description or f"Execute {command}",
+                "tags": tags,
+                "command_type": command_type
+            })
+        else:
+            self.result = ("cancel", None)
+        
+        self.dismiss(self.result)
+    
+    @on(Button.Pressed, "#cancel-btn")
+    def cancel_pressed(self):
+        """Handle cancel button press"""
+        self.result = ("cancel", None)
+        self.dismiss(self.result)
+    
+    def action_dismiss(self):
+        """Handle escape key - same as cancel"""
+        self.result = ("cancel", None)
+        self.dismiss(self.result)
+
+
 class ClusterSwitchModal(ModalScreen):
     """Modal for switching between clusters"""
     
