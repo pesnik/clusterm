@@ -3,7 +3,7 @@ Command pad component for displaying and selecting frequently used commands
 """
 
 from typing import List, Optional
-from textual.containers import Horizontal
+from textual.containers import Horizontal, Vertical
 from textual.widgets import Button, Static, DataTable, Input, Select
 from textual.widget import Widget
 from textual.binding import Binding
@@ -43,9 +43,9 @@ class CommandPad(Widget):
         
     
     def compose(self):
-        """Compose CommandPad using component-specific classes"""
-        # Search controls with CommandPad-specific styling
-        with Horizontal(classes="command-pad-search-controls"):
+        """Compose CommandPad using component-specific classes with vertical layout"""
+        # Search controls with CommandPad-specific styling - use Vertical for simpler layout
+        with Vertical(classes="command-pad-search-controls"):
             yield Static("🔍 Search:", classes="command-pad-search-label")
             yield Input(
                 placeholder="Search commands...",

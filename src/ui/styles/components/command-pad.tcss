@@ -9,88 +9,38 @@ $command-pad-actions-height: 3;
 $command-pad-input-height: 1;
 $command-pad-button-width: 12;
 
-/* Professional Command Pad Design System */
-$command-pad-surface: #1a1a1a;
-$command-pad-surface-variant: #2a2a2a;
-$command-pad-surface-elevated: #3a3a3a;
-$command-pad-on-surface: #ffffff;
-$command-pad-on-surface-variant: #cccccc;
-$command-pad-outline: #666666;
-$command-pad-outline-variant: #444444;
-$command-pad-shadow: #000000;
+/* Use Textual theme colors instead of custom colors */
 
 /* CommandPad Container */
 #command-pad {
     height: 100%;
     min-height: 50;
-    background: $command-pad-surface;
-    border: solid $command-pad-outline;
-    border-radius: $command-pad-border-radius;
 }
 
 /* CommandPad Search Controls */
 .command-pad-search-controls {
-    height: $command-pad-controls-height;
-    align: center middle;
-    margin-top: $command-pad-spacing;
-    margin-bottom: $command-pad-spacing;
-    padding: 0 $command-pad-spacing;
-    background: $command-pad-surface-variant;
-    border-radius: $command-pad-border-radius;
+    height: auto;
+    margin: $command-pad-spacing;
+    padding: $command-pad-spacing;
 }
 
 .command-pad-search-label {
-    color: $command-pad-on-surface-variant;
-    margin-right: $command-pad-spacing;
+    color: $primary;
     text-style: bold;
 }
 
 .command-pad-search-input {
-    margin: 0 $command-pad-spacing;
-    min-width: 20;
-    background: $command-pad-surface-elevated;
-    border: solid $command-pad-outline-variant;
-    color: $command-pad-on-surface;
-}
-
-.command-pad-search-input:focus {
-    border: solid $primary;
-    background: $command-pad-surface;
+    margin-top: $command-pad-spacing;
 }
 
 .command-pad-filter-select {
-    margin: 0 $command-pad-spacing;
-    min-width: 15;
-    background: $command-pad-surface-elevated;
-    border: solid $command-pad-outline-variant;
-    color: $command-pad-on-surface;
-}
-
-.command-pad-filter-select:focus {
-    border: solid $primary;
+    margin-top: $command-pad-spacing;
 }
 
 /* CommandPad Table */
 .command-pad-table {
     height: 1fr;
     margin: $command-pad-spacing;
-    background: $command-pad-surface;
-    border: solid $command-pad-outline-variant;
-    border-radius: $command-pad-border-radius;
-}
-
-.command-pad-table > .datatable--header {
-    background: $command-pad-surface-variant;
-    color: $command-pad-on-surface;
-    text-style: bold;
-}
-
-.command-pad-table > .datatable--cursor {
-    background: $primary 20%;
-}
-
-.command-pad-table > .datatable--hover {
-    background: $command-pad-surface-variant;
 }
 
 /* CommandPad Action Buttons */
@@ -100,36 +50,23 @@ $command-pad-shadow: #000000;
     margin-top: $command-pad-spacing;
     margin-bottom: $command-pad-spacing;
     padding: 0 $command-pad-spacing;
-    background: $command-pad-surface-variant;
-    border-radius: $command-pad-border-radius;
+    background: $surface-variant;
 }
 
 .command-pad-button {
     margin: 0 $command-pad-spacing;
     min-width: $command-pad-button-width;
     height: $command-pad-actions-height;
-    background: $command-pad-surface-elevated;
-    color: $command-pad-on-surface;
-    border: solid $command-pad-outline;
-    border-radius: $command-pad-border-radius;
 }
 
 .command-pad-button:hover {
     background: $primary;
     color: $text-primary;
-    border: solid $primary;
-}
-
-.command-pad-button:disabled {
-    background: $command-pad-surface-variant;
-    color: $command-pad-outline;
-    border: solid $command-pad-outline-variant;
 }
 
 .command-pad-button-primary {
     background: $primary;
     color: $text-primary;
-    border: solid $primary;
 }
 
 .command-pad-button-primary:hover {
@@ -137,15 +74,13 @@ $command-pad-shadow: #000000;
 }
 
 .command-pad-button-secondary {
-    background: $command-pad-surface-elevated;
-    color: $command-pad-on-surface-variant;
-    border: solid $command-pad-outline-variant;
+    background: $surface-lighten-1;
+    color: $text;
 }
 
 .command-pad-button-danger {
     background: $error;
     color: $text-primary;
-    border: solid $error;
 }
 
 .command-pad-button-danger:hover {
@@ -154,7 +89,7 @@ $command-pad-shadow: #000000;
 
 /* CommandPad Stats */
 .command-pad-stats {
-    color: $command-pad-on-surface-variant;
+    color: $text-muted;
     text-align: center;
     margin: $command-pad-spacing;
     text-style: italic;
@@ -164,18 +99,18 @@ $command-pad-shadow: #000000;
 .command-pad-empty {
     height: 1fr;
     align: center middle;
-    color: $command-pad-on-surface-variant;
+    color: $text-muted;
     text-style: italic;
 }
 
 .command-pad-empty-icon {
     text-align: center;
-    color: $command-pad-outline;
+    color: $text-muted;
     text-style: bold;
     margin-bottom: $command-pad-spacing;
 }
 
 .command-pad-empty-text {
     text-align: center;
-    color: $command-pad-on-surface-variant;
+    color: $text-muted;
 }
