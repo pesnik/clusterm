@@ -2,7 +2,7 @@
 Command pad component for displaying and selecting frequently used commands
 """
 
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from textual.containers import Horizontal, Vertical
 from textual.widgets import Button, Static, DataTable, Input, Select
 from textual.widget import Widget
@@ -36,7 +36,7 @@ class CommandPad(Widget):
     
     class CommandAdded(Message):
         """Message sent when a command is added"""
-        def __init__(self, command_data: dict):
+        def __init__(self, command_data: Dict[str, Any]) -> None:
             self.command_data = command_data
             super().__init__()
     
