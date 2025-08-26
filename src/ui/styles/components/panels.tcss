@@ -42,12 +42,12 @@ TabbedContent {
 
 TabPane {
     height: 100%;
-    min-height: 40;
+    min-height: 50;
 }
 
 #command-pad {
     height: 100%;
-    min-height: 40;
+    min-height: 50;
 }
 
 .charts-section {
@@ -76,54 +76,4 @@ TabPane {
     margin-bottom: $spacing-xs;
 }
 
-/* CommandPad - Fix Container Height Issue */
-#command-pad {
-    height: 100%;
-    width: 100%;
-    min-height: 40;
-    overflow: hidden;
-    layout: vertical;
-}
-
-#command-header {
-    dock: top;
-    height: auto;
-    min-height: 3;
-    background: $surface-variant;
-    border-bottom: solid $outline;
-    padding: 1;
-}
-
-#command-title {
-    color: $primary;
-    text-style: bold;
-}
-
-#command-stats {
-    color: $on-surface-variant;
-    text-style: italic;
-    text-align: right;
-}
-
-#command-controls {
-    dock: top;
-    height: auto;
-    min-height: 3;
-    background: $surface-elevated;
-    border-bottom: solid $outline;
-    padding: 1;
-}
-
-#commands-table {
-    height: 1fr;
-}
-
-#command-actions {
-    dock: bottom;
-    height: auto;
-    min-height: 3;
-    background: $surface-variant;
-    border-top: solid $outline;
-    padding: 1;
-}
 

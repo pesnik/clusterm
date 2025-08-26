@@ -43,38 +43,30 @@ class CommandPad(Widget):
         
     
     def compose(self):
-        """Compose full-featured command pad"""
-        # Header with title and stats
-        with Horizontal(id="command-header"):
-            yield Static("⚡ Command Center", id="command-title")
-            yield Static("", id="command-stats")
-        
-        # Search and filter controls
-        with Horizontal(id="command-controls"):
-            yield Static("🔍")
+        """Compose CommandPad using exact working tab pattern"""
+        # Search controls first (using working tab-actions pattern)
+        with Horizontal(classes="tab-actions"):
+            yield Static("🔍 Search:", classes="control-label")
             yield Input(
-                placeholder="Search commands, descriptions, or tags...",
+                placeholder="Search commands...",
                 id="search-input"
             )
             yield Select([
                 ("🔥 Most Used", "frequent"),
-                ("🕐 Recently Used", "recent"), 
-                ("📋 All Commands", "all"),
-                ("⚡ Kubernetes", "kubectl"),
-                ("🚢 Helm Charts", "helm"),
-                ("🐳 Docker", "docker")
+                ("🕐 Recent", "recent"), 
+                ("📋 All", "all"),
+                ("⚡ kubectl", "kubectl"),
+                ("🚢 Helm", "helm")
             ], value="frequent", id="filter-select")
         
-        # Main commands table
-        yield DataTable(id="commands-table", zebra_stripes=True)
+        # Main table (exactly like other working tabs)
+        yield DataTable(id="commands-table")
         
-        # Action buttons
-        with Horizontal(id="command-actions"):
-            yield Button("▶ Execute", variant="primary", id="use-btn")
-            yield Button("📋 Copy", variant="default", id="copy-btn")
-            yield Button("➕ Add", variant="success", id="add-btn")
-            yield Button("✏️ Edit", variant="default", id="edit-btn")
-            yield Button("🗑️ Delete", variant="error", id="delete-btn")
+        # Action buttons (using working tab-actions pattern)
+        with Horizontal(classes="tab-actions"):
+            yield Button("Execute", id="use-btn")
+            yield Button("Copy", id="copy-btn")
+            yield Button("Delete", id="delete-btn")
     
     def on_mount(self):
         """Setup the modern command pad"""
@@ -387,24 +379,21 @@ class CommandPad(Widget):
             pass  # Buttons might not exist yet
     
     def _update_all_stats(self):
-        """Update statistics display"""
+        """Update statistics display in search label"""
         try:
             all_commands = self.command_history.get_all_commands()
             filtered_commands = self._get_filtered_commands()
             
-            # Update stats display
-            stats_text = f"📊 {len(filtered_commands)}/{len(all_commands)} commands"
+            # Update search label with stats
+            stats_text = f"🔍 Search ({len(filtered_commands)}/{len(all_commands)}):"
             if self.search_query:
-                stats_text += f" | 🔍 '{self.search_query[:15]}'"
-            elif self.current_filter != "frequent":
-                filter_names = {
-                    "recent": "Recent", "all": "All", "kubectl": "kubectl", 
-                    "helm": "Helm", "docker": "Docker"
-                }
-                stats_text += f" | {filter_names.get(self.current_filter, self.current_filter)}"
+                stats_text = f"🔍 Search '{self.search_query[:10]}' ({len(filtered_commands)}):"
             
-            stats_static = self.query_one("#command-stats", Static)
-            stats_static.update(stats_text)
+            try:
+                label_static = self.query_one(".control-label", Static)
+                label_static.update(stats_text)
+            except:
+                pass  # Label might not exist
             
         except Exception as e:
             if self.logger:
