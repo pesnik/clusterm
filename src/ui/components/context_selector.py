@@ -24,18 +24,75 @@ class ContextSelector(Vertical):
         super().__init__(**kwargs)
         self.k8s_manager = k8s_manager
         self.logger = logger
-        self.current_cluster = "default"
-        self.current_namespace = "default"
+        self.current_cluster = None
+        self.current_namespace = None
 
         if self.logger:
             self.logger.debug("ContextSelector.__init__: Entry - Initializing ContextSelector")
-            self.logger.debug(f"ContextSelector.__init__: Initial state - cluster: {self.current_cluster}, namespace: {self.current_namespace}")
 
-        # Get initial context
-        self._update_current_context()
+        # Get initial context from actual cluster data
+        self._initialize_from_cluster_data()
 
         if self.logger:
             self.logger.info(f"ContextSelector.__init__: Initialization complete - cluster: {self.current_cluster}, namespace: {self.current_namespace}")
+
+    def on_mount(self):
+        """Called when the context selector is mounted to the DOM"""
+        if self.logger:
+            self.logger.debug("ContextSelector.on_mount: Entry - Populating selectors after mount")
+        
+        # Populate selectors with actual data now that everything is set up
+        self.call_after_refresh(self.refresh_selectors)
+        
+        if self.logger:
+            self.logger.debug("ContextSelector.on_mount: Scheduled selector refresh")
+
+    def _initialize_from_cluster_data(self):
+        """Initialize cluster and namespace from actual k8s data"""
+        if self.logger:
+            self.logger.debug("ContextSelector._initialize_from_cluster_data: Entry")
+
+        try:
+            # Initialize cluster
+            if hasattr(self.k8s_manager, "cluster_manager"):
+                current_cluster = self.k8s_manager.cluster_manager.get_current_cluster()
+                if current_cluster:
+                    self.current_cluster = current_cluster.get("name", None)
+                else:
+                    # Get first available cluster
+                    clusters = self.k8s_manager.cluster_manager.get_available_clusters()
+                    if clusters:
+                        self.current_cluster = clusters[0].get("name", None)
+                        # Set it as current
+                        if self.current_cluster:
+                            self.k8s_manager.cluster_manager.set_current_cluster(self.current_cluster)
+
+            # Initialize namespace from actual API data
+            try:
+                namespaces = self.k8s_manager.get_namespaces()
+                if namespaces:
+                    # Look for default first, otherwise use first available
+                    namespace_names = [ns["metadata"]["name"] for ns in namespaces]
+                    if "default" in namespace_names:
+                        self.current_namespace = "default"
+                    else:
+                        self.current_namespace = namespace_names[0]
+                else:
+                    self.current_namespace = "default"  # Fallback if API fails
+            except Exception as ns_error:
+                if self.logger:
+                    self.logger.warning(f"ContextSelector._initialize_from_cluster_data: Could not fetch namespaces: {ns_error}")
+                self.current_namespace = "default"
+
+            if self.logger:
+                self.logger.info(f"ContextSelector._initialize_from_cluster_data: Initialized with cluster: {self.current_cluster}, namespace: {self.current_namespace}")
+
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"ContextSelector._initialize_from_cluster_data: Error during initialization: {e}")
+            # Fallback to safe defaults only if everything fails
+            self.current_cluster = "default"
+            self.current_namespace = "default"
 
     def _update_current_context(self):
         """Update current context from k8s_manager"""
@@ -72,8 +129,11 @@ class ContextSelector(Vertical):
                 self.logger.error(f"ContextSelector._update_current_context: Error updating context: {e}", extra={
                     "error_type": type(e).__name__,
                 })
-            self.current_cluster = "default"
-            self.current_namespace = "default"
+            # Only set defaults if we don't have any values yet
+            if not self.current_cluster:
+                self.current_cluster = "default"
+            if not self.current_namespace:
+                self.current_namespace = "default"
 
     def compose(self):
         """Compose the context selector with dropdowns"""
@@ -138,15 +198,15 @@ class ContextSelector(Vertical):
                     return options
 
             if self.logger:
-                self.logger.debug("ContextSelector._get_cluster_options: No clusters found, using default")
-            return [("default", "default")]
+                self.logger.warning("ContextSelector._get_cluster_options: No clusters found")
+            return []
 
         except Exception as e:
             if self.logger:
                 self.logger.error(f"ContextSelector._get_cluster_options: Error getting clusters: {e}", extra={
                     "error_type": type(e).__name__,
                 })
-            return [("default", "default")]
+            return []
 
     def _get_namespace_options(self) -> list[tuple]:
         """Get available namespace options"""
@@ -165,7 +225,8 @@ class ContextSelector(Vertical):
                 return options
 
             if self.logger:
-                self.logger.debug("ContextSelector._get_namespace_options: No namespaces found, using default")
+                self.logger.warning("ContextSelector._get_namespace_options: No namespaces found from API")
+            # Return default as fallback only
             return [("default", "default")]
 
         except Exception as e:
@@ -173,6 +234,7 @@ class ContextSelector(Vertical):
                 self.logger.error(f"ContextSelector._get_namespace_options: Error getting namespaces: {e}", extra={
                     "error_type": type(e).__name__,
                 })
+            # Return default as fallback only
             return [("default", "default")]
 
     @on(Select.Changed, "#cluster-select")
@@ -298,17 +360,25 @@ class ContextSelector(Vertical):
 
             old_namespace = self.current_namespace
 
-            # Reset to default namespace for new cluster
-            if ("default", "default") in new_options:
+            # Choose the best available namespace for new cluster
+            if new_options:
+                # Prefer default if available, otherwise use first available namespace
+                if ("default", "default") in new_options:
+                    self.current_namespace = "default"
+                    namespace_select.value = "default"
+                    if self.logger:
+                        self.logger.debug("ContextSelector._refresh_namespace_selector: Set to default namespace")
+                else:
+                    # Use first available namespace
+                    self.current_namespace = new_options[0][1]
+                    namespace_select.value = new_options[0][1]
+                    if self.logger:
+                        self.logger.debug(f"ContextSelector._refresh_namespace_selector: Set to first available namespace: {self.current_namespace}")
+            else:
+                # No namespaces available, fallback
                 self.current_namespace = "default"
-                namespace_select.value = "default"
                 if self.logger:
-                    self.logger.debug("ContextSelector._refresh_namespace_selector: Set to default namespace")
-            elif new_options:
-                self.current_namespace = new_options[0][1]
-                namespace_select.value = new_options[0][1]
-                if self.logger:
-                    self.logger.debug(f"ContextSelector._refresh_namespace_selector: Set to first available namespace: {self.current_namespace}")
+                    self.logger.warning("ContextSelector._refresh_namespace_selector: No namespaces available, using default")
 
             if self.logger and old_namespace != self.current_namespace:
                 self.logger.info(f"ContextSelector._refresh_namespace_selector: Namespace updated after cluster change: {old_namespace} -> {self.current_namespace}")
@@ -330,22 +400,29 @@ class ContextSelector(Vertical):
         }
 
     def refresh_selectors(self):
-        """Refresh selector values to match current context"""
+        """Refresh selector options and values to match current context"""
         if self.logger:
             self.logger.debug(f"ContextSelector.refresh_selectors: Entry - Refreshing selectors to cluster: {self.current_cluster}, namespace: {self.current_namespace}")
 
         try:
+            # Refresh cluster selector
             cluster_select = self.query_one("#cluster-select", Select)
+            cluster_options = self._get_cluster_options()
+            cluster_select.set_options(cluster_options)
             cluster_select.value = self.current_cluster
 
             if self.logger:
-                self.logger.debug(f"ContextSelector.refresh_selectors: Updated cluster selector to: {self.current_cluster}")
+                self.logger.debug(f"ContextSelector.refresh_selectors: Updated cluster selector with {len(cluster_options)} options, set to: {self.current_cluster}")
 
+            # Refresh namespace selector with current options
             namespace_select = self.query_one("#namespace-select", Select)
+            namespace_options = self._get_namespace_options()
+            namespace_select.set_options(namespace_options)
             namespace_select.value = self.current_namespace
 
             if self.logger:
-                self.logger.debug(f"ContextSelector.refresh_selectors: Updated namespace selector to: {self.current_namespace}")
+                self.logger.debug(f"ContextSelector.refresh_selectors: Updated namespace selector with {len(namespace_options)} options, set to: {self.current_namespace}")
+                self.logger.debug(f"ContextSelector.refresh_selectors: Namespace options: {[opt[0] for opt in namespace_options]}")
                 self.logger.info("ContextSelector.refresh_selectors: Selectors refreshed successfully")
 
         except Exception as e:

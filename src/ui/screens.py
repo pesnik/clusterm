@@ -28,7 +28,7 @@ from .components.panels import LogPanel, StatusPanel
 class MainScreen(Screen):
     """Main application screen"""
 
-    current_namespace = reactive("default")
+    current_namespace = reactive(None)
     selected_chart = reactive(None)
     selected_resource = reactive(None)
 
@@ -190,14 +190,23 @@ class MainScreen(Screen):
 
             self.call_after_refresh(log_startup)
 
-            # Sync context selector with initial state
+            # Sync context selector with initial state and get actual namespace
             def sync_context_selector():
                 try:
                     context_selector = self.query_one("#context-selector", ContextSelector)
-                    context_selector.current_namespace = self.current_namespace
-                    context_selector.refresh_selectors()
-                except Exception:
-                    pass
+                    # Get the actual namespace from context selector (it was initialized from cluster data)
+                    if context_selector.current_namespace:
+                        self.current_namespace = context_selector.current_namespace
+                    else:
+                        # Fallback if context selector failed to initialize
+                        self.current_namespace = "default"
+                    
+                    # Don't call refresh_selectors here - let the context selector handle its own refresh via on_mount
+                    self.logger.info(f"MainScreen: Synced with context selector - namespace: {self.current_namespace}")
+                except Exception as e:
+                    self.logger.error(f"MainScreen: Failed to sync with context selector: {e}")
+                    # Safe fallback
+                    self.current_namespace = "default"
 
             self.logger.debug("MainScreen.on_mount: Scheduling sync_context_selector")
             self.call_after_refresh(sync_context_selector)

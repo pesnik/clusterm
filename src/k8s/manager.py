@@ -53,13 +53,13 @@ class K8sManager:
         self.logger.debug("K8sManager.__init__: Creating ResourceManager")
         self.resource_manager = ResourceManager(self.command_executor, logger)
 
-        # Set up initial cluster
-        self.logger.debug("K8sManager.__init__: Setting up initial cluster")
-        self._setup_initial_cluster()
-
-        # Subscribe to cluster changes
+        # Subscribe to cluster changes BEFORE setting up initial cluster
         self.logger.debug("K8sManager.__init__: Subscribing to cluster change events")
         self.event_bus.subscribe(EventType.CLUSTER_CHANGED, self._on_cluster_changed)
+
+        # Set up initial cluster (now the event handler will be called)
+        self.logger.debug("K8sManager.__init__: Setting up initial cluster")
+        self._setup_initial_cluster()
 
         self.logger.info("K8sManager.__init__: K8sManager initialization completed successfully")
 
