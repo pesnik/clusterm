@@ -56,9 +56,9 @@ def build_binary():
 
 def test_binary():
     """Test the built binary"""
-    binary_path = Path("dist/clusterm")
+    binary_path = Path("dist/clusterm/clusterm")
     if not binary_path.exists():
-        print("❌ Binary not found at dist/clusterm")
+        print("❌ Binary not found at dist/clusterm/clusterm")
         return False
     
     print("🧪 Testing binary...")
@@ -81,20 +81,52 @@ def test_binary():
         return False
 
 
+def create_portable_wrapper():
+    """Create a portable wrapper script"""
+    wrapper_content = '''#!/bin/bash
+# Portable wrapper for clusterm PyInstaller distribution
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CLUSTERM_DIR="$SCRIPT_DIR/clusterm"
+
+if [ -d "$CLUSTERM_DIR" ]; then
+    exec "$CLUSTERM_DIR/clusterm" "$@"
+else
+    echo "Error: clusterm distribution not found at $CLUSTERM_DIR"
+    exit 1
+fi
+'''
+    wrapper_path = Path("dist/clusterm-portable")
+    wrapper_path.write_text(wrapper_content)
+    wrapper_path.chmod(0o755)
+    return wrapper_path
+
 def show_results():
     """Show build results and next steps"""
-    binary_path = Path("dist/clusterm")
+    binary_path = Path("dist/clusterm/clusterm")
+    wrapper_path = Path("dist/clusterm-portable")
+    
     if binary_path.exists():
-        size_mb = binary_path.stat().st_size / (1024 * 1024)
+        # Create portable wrapper
+        create_portable_wrapper()
+        
+        size_mb = sum(f.stat().st_size for f in Path("dist/clusterm").rglob("*") if f.is_file()) / (1024 * 1024)
         print(f"\n🎉 Build completed successfully!")
-        print(f"📁 Binary location: {binary_path.absolute()}")
-        print(f"📏 Binary size: {size_mb:.1f} MB")
+        print(f"📁 Distribution directory: {Path('dist/clusterm').absolute()}")
+        print(f"📏 Total size: {size_mb:.1f} MB")
         print(f"\n📖 Usage:")
-        print(f"   ./dist/clusterm                    # Run the TUI application")
-        print(f"   ./dist/clusterm --help             # Show help")
-        print(f"\n📦 Distribution:")
-        print(f"   cp dist/clusterm /usr/local/bin/   # Install system-wide (requires sudo)")
-        print(f"   export PATH=$PATH:$(pwd)/dist      # Add to PATH temporarily")
+        print(f"   ./dist/clusterm/clusterm           # Run directly from dist")
+        print(f"   ./dist/clusterm-portable           # Run using portable wrapper")
+        print(f"\n📦 Installation:")
+        print(f"   # Option 1: Copy entire directory")
+        print(f"   cp -r dist/clusterm ~/.local/share/")
+        print(f"   ln -sf ~/.local/share/clusterm/clusterm ~/.local/bin/clusterm")
+        print(f"   ")
+        print(f"   # Option 2: Use portable wrapper")
+        print(f"   cp dist/clusterm-portable ~/.local/bin/clusterm")
+        print(f"   cp -r dist/clusterm ~/.local/bin/")
+        print(f"   ")
+        print(f"   # Option 3: Add to PATH temporarily")
+        print(f"   export PATH=$PATH:$(pwd)/dist/clusterm")
     else:
         print("\n❌ Build failed - binary not found")
 
