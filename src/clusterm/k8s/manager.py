@@ -28,7 +28,7 @@ class K8sManager:
         # Setup paths
         base_path = Path(config.get("k8s.base_path", Path.home() / ".clusterm" / "k8s"))
         self.k8s_path = base_path
-        
+
         # Initialize cluster-aware project paths (will be set based on current context)
         self.current_cluster_path = None
         self.current_projects_path = None
@@ -193,13 +193,13 @@ Place your kubectl and helm binaries here, or ensure they're in your system PATH
     def _update_cluster_paths(self, cluster_name: str):
         """Update cluster-aware project paths when cluster changes"""
         self.logger.debug(f"K8sManager._update_cluster_paths: Updating paths for cluster: {cluster_name}")
-        
+
         self.current_cluster_path = self.k8s_path / "clusters" / cluster_name
         self.current_projects_path = self.current_cluster_path / "projects"
-        
+
         # Ensure projects directory exists
         self.current_projects_path.mkdir(parents=True, exist_ok=True)
-        
+
         self.logger.debug(f"K8sManager._update_cluster_paths: Updated paths - cluster: {self.current_cluster_path}, projects: {self.current_projects_path}")
 
     def get_current_namespace_projects_path(self, namespace: str = "default") -> Path | None:
@@ -207,10 +207,10 @@ Place your kubectl and helm binaries here, or ensure they're in your system PATH
         if not self.current_projects_path:
             self.logger.warning("K8sManager.get_current_namespace_projects_path: No current cluster set")
             return None
-            
+
         namespace_path = self.current_projects_path / namespace
         namespace_path.mkdir(parents=True, exist_ok=True)
-        
+
         return namespace_path
 
     def get_available_projects(self, namespace: str = "default") -> dict[str, list[dict[str, str]]]:
@@ -223,7 +223,7 @@ Place your kubectl and helm binaries here, or ensure they're in your system PATH
             "apps": [],
             "other": []
         }
-        
+
         # Get namespace projects path for current cluster
         namespace_path = self.get_current_namespace_projects_path(namespace)
         if not namespace_path or not namespace_path.exists():
@@ -236,24 +236,24 @@ Place your kubectl and helm binaries here, or ensure they're in your system PATH
         for project_type_dir in namespace_path.iterdir():
             if not project_type_dir.is_dir():
                 continue
-                
+
             project_type = project_type_dir.name.lower()
             self.logger.debug(f"K8sManager.get_available_projects: Found project type directory: {project_type}")
-            
+
             # Determine project category
             if project_type in ["helm-charts", "helm", "charts"]:
                 category = "helm-charts"
             elif project_type in ["manifests", "yaml", "yamls", "k8s"]:
-                category = "manifests"  
+                category = "manifests"
             elif project_type in ["apps", "applications"]:
                 category = "apps"
             else:
                 category = "other"
-            
+
             # Scan projects within this type
             project_items = self._scan_project_directory(project_type_dir, category)
             projects[category].extend(project_items)
-            
+
         total_projects = sum(len(items) for items in projects.values())
         self.logger.info(f"K8sManager.get_available_projects: Found {total_projects} projects in {namespace} namespace")
         return projects
@@ -261,11 +261,11 @@ Place your kubectl and helm binaries here, or ensure they're in your system PATH
     def _scan_project_directory(self, project_dir: Path, project_type: str) -> list[dict[str, str]]:
         """Scan a project directory for individual projects"""
         items = []
-        
+
         for item_path in project_dir.iterdir():
             if not item_path.is_dir():
                 continue
-                
+
             item_info = {
                 "name": item_path.name,
                 "path": str(item_path),
@@ -275,7 +275,7 @@ Place your kubectl and helm binaries here, or ensure they're in your system PATH
                 "description": "No description",
                 "version": "unknown",
             }
-            
+
             # Type-specific processing
             if project_type == "helm-charts":
                 # Check for Chart.yaml
@@ -292,7 +292,7 @@ Place your kubectl and helm binaries here, or ensure they're in your system PATH
                 else:
                     # Skip if no Chart.yaml
                     continue
-                    
+
             elif project_type == "manifests":
                 # Check for YAML files
                 yaml_files = list(item_path.glob("*.yaml")) + list(item_path.glob("*.yml"))
@@ -300,11 +300,11 @@ Place your kubectl and helm binaries here, or ensure they're in your system PATH
                     item_info["description"] = f"Kubernetes manifests ({len(yaml_files)} files)"
                 else:
                     item_info["description"] = "Kubernetes manifests directory"
-                    
+
             elif project_type == "apps":
                 # Check for common app files
                 app_files = (
-                    list(item_path.glob("*.yaml")) + 
+                    list(item_path.glob("*.yaml")) +
                     list(item_path.glob("*.yml")) +
                     list(item_path.glob("Dockerfile")) +
                     list(item_path.glob("docker-compose.yml"))
@@ -313,22 +313,22 @@ Place your kubectl and helm binaries here, or ensure they're in your system PATH
                     item_info["description"] = f"Application ({len(app_files)} files)"
                 else:
                     item_info["description"] = "Application directory"
-                    
+
             else:
                 item_info["description"] = f"{project_type.title()} project"
-            
+
             items.append(item_info)
-            
+
         self.logger.debug(f"K8sManager._scan_project_directory: Found {len(items)} items in {project_dir.name}")
         return items
 
     def get_available_charts(self, namespace: str = "default") -> list[dict[str, str]]:
         """Get list of available Helm charts for current cluster and namespace (backward compatibility)"""
         self.logger.debug(f"K8sManager.get_available_charts: Entry - namespace: {namespace}")
-        
+
         projects = self.get_available_projects(namespace)
         charts = projects.get("helm-charts", [])
-        
+
         self.logger.info(f"K8sManager.get_available_charts: Found {len(charts)} Helm charts in {namespace} namespace")
         return charts
 
@@ -337,13 +337,13 @@ Place your kubectl and helm binaries here, or ensure they're in your system PATH
         self.logger.debug(f"K8sManager.deploy_chart: Entry - Deploying chart: {chart_name} with config: {config}")
 
         namespace = config.get("namespace", "default")
-        
+
         # Find chart in current cluster/namespace context
         namespace_path = self.get_current_namespace_projects_path(namespace)
         if not namespace_path:
-            self.logger.error(f"K8sManager.deploy_chart: No current cluster set")
+            self.logger.error("K8sManager.deploy_chart: No current cluster set")
             return False, "No current cluster configured"
-            
+
         chart_path = namespace_path / chart_name
         if not chart_path.exists():
             self.logger.error(f"K8sManager.deploy_chart: Chart not found: {chart_name} at path: {chart_path}")

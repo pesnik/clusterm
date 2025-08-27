@@ -87,6 +87,7 @@ class StatusPanel(Container):
 
     cluster_status = reactive("Unknown")
     connection_status = reactive("Disconnected")
+    selected_chart = reactive("None")
 
     def compose(self):
         """Compose the status panel"""
@@ -95,6 +96,8 @@ class StatusPanel(Container):
             yield Static(self.cluster_status, id="cluster-status", classes="status-value")
             yield Static("Status:", classes="status-label")
             yield Static(self.connection_status, id="connection-status", classes="status-value")
+            yield Static("Chart:", classes="status-label")
+            yield Static(self.selected_chart, id="selected-chart", classes="status-value")
 
     def update_cluster_status(self, cluster_name: str, connected: bool):
         """Update cluster status display"""
@@ -115,5 +118,15 @@ class StatusPanel(Container):
             else:
                 status_widget.add_class("disconnected")
                 status_widget.remove_class("connected")
+        except:
+            pass
+
+    def update_chart_status(self, chart_name: str | None):
+        """Update selected chart display"""
+        self.selected_chart = chart_name or "None"
+        
+        try:
+            chart_widget = self.query_one("#selected-chart", Static)
+            chart_widget.update(self.selected_chart)
         except:
             pass

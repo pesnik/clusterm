@@ -79,7 +79,7 @@ class CommandExecutor:
         cmd = [self.kubectl_binary] + args
         return self._execute_command(cmd, "kubectl", timeout)
 
-    def execute_helm(self, args: list[str], timeout: int = 60) -> tuple[bool, str]:
+    def execute_helm(self, args: list[str], timeout: int = 60, cwd: str | None = None) -> tuple[bool, str]:
         """Execute a helm command"""
         if not self.helm_binary:
             error_msg = "Helm binary not found"
@@ -92,16 +92,17 @@ class CommandExecutor:
             return False, error_msg
 
         cmd = [self.helm_binary] + args
-        return self._execute_command(cmd, "helm", timeout)
+        return self._execute_command(cmd, "helm", timeout, cwd)
 
 
-    def _execute_command(self, cmd: list[str], cmd_type: str, timeout: int) -> tuple[bool, str]:
+    def _execute_command(self, cmd: list[str], cmd_type: str, timeout: int, cwd: str | None = None) -> tuple[bool, str]:
         """Execute a command with proper environment and error handling"""
         try:
             env = os.environ.copy()
             env["KUBECONFIG"] = str(self.current_kubeconfig)
 
-            self.logger.debug(f"Executing {cmd_type} command: {' '.join(cmd)}")
+            working_dir = cwd if cwd else str(self.base_path)
+            self.logger.debug(f"Executing {cmd_type} command: {' '.join(cmd)} (cwd: {working_dir})")
 
             result = subprocess.run(
                 cmd,
@@ -109,7 +110,7 @@ class CommandExecutor:
                 text=True,
                 env=env,
                 timeout=timeout,
-                cwd=str(self.base_path),
+                cwd=working_dir,
             )
 
             success = result.returncode == 0

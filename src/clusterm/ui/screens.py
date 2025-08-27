@@ -200,7 +200,7 @@ class MainScreen(Screen):
                     else:
                         # Fallback if context selector failed to initialize
                         self.current_namespace = "default"
-                    
+
                     # Don't call refresh_selectors here - let the context selector handle its own refresh via on_mount
                     self.logger.info(f"MainScreen: Synced with context selector - namespace: {self.current_namespace}")
                 except Exception as e:
@@ -248,6 +248,13 @@ class MainScreen(Screen):
                 )
                 self.logger.debug(f"MainScreen._setup_charts_table: Added chart row: {chart['name']} v{chart['version']}")
 
+            # Auto-select first chart if none selected
+            if charts and not self.selected_chart:
+                self.selected_chart = charts[0]["name"]
+                self.logger.info(f"MainScreen._setup_charts_table: Auto-selected first chart: {self.selected_chart}")
+                # Update status
+                self._update_status_panel_with_chart()
+
             self.logger.info(f"MainScreen._setup_charts_table: Successfully setup charts table with {len(charts)} entries")
 
         except Exception as e:
@@ -280,6 +287,14 @@ class MainScreen(Screen):
                     description,
                 )
                 self.logger.debug(f"MainScreen._update_charts_table: Added chart row: {chart['name']} v{chart['version']}")
+
+            # Auto-select first chart if none selected or if selected chart is not in current list
+            chart_names = [chart["name"] for chart in charts]
+            if charts and (not self.selected_chart or self.selected_chart not in chart_names):
+                self.selected_chart = charts[0]["name"]
+                self.logger.info(f"MainScreen._update_charts_table: Auto-selected first chart: {self.selected_chart}")
+                # Update status
+                self._update_status_panel_with_chart()
 
             self.logger.info(f"MainScreen._update_charts_table: Successfully updated charts table with {len(charts)} entries for namespace {self.current_namespace}")
 
@@ -609,6 +624,14 @@ class MainScreen(Screen):
                 "error_type": type(e).__name__,
                 "error_details": str(e),
             })
+
+    def _update_status_panel_with_chart(self):
+        """Update the status panel to show selected chart"""
+        try:
+            status_panel = self.query_one("#status-panel", StatusPanel)
+            status_panel.update_chart_status(self.selected_chart)  # type: ignore
+        except Exception as e:
+            self.logger.error(f"MainScreen._update_status_panel_with_chart: Error: {e}")
 
     def _on_resource_selected(self, resource_info: dict[str, Any]):
         """Handle resource selection"""
@@ -1052,7 +1075,7 @@ class MainScreen(Screen):
             cmd_args = self._inject_namespace_context(cmd_args)
         elif cmd_type == "helm":
             cmd_args = self._inject_helm_context(cmd_args)
-        
+
         # Build the full command for history
         full_command = f"{cmd_type} {cmd_args}"
         log_panel.write_log(f"Executing {full_command}")
@@ -1060,7 +1083,8 @@ class MainScreen(Screen):
         if cmd_type == "kubectl":
             success, output = self.k8s_manager.command_executor.execute_kubectl(cmd_args.split())
         else:
-            success, output = self.k8s_manager.command_executor.execute_helm(cmd_args.split())
+            working_dir = self._get_helm_working_directory(cmd_args)
+            success, output = self.k8s_manager.command_executor.execute_helm(cmd_args.split(), cwd=working_dir)
 
         if success:
             # Add to command history on successful execution (context-aware)
@@ -1080,23 +1104,23 @@ class MainScreen(Screen):
         """Inject current namespace context into kubectl command if not already specified"""
         if not cmd_args.strip():
             return cmd_args
-            
+
         # Convert to list for easier manipulation
         args = cmd_args.split()
-        
+
         # Check if namespace is already specified
         has_namespace = any(arg in ["-n", "--namespace", "--all-namespaces", "-A"] for arg in args)
-        
+
         if has_namespace:
             # Namespace already specified, don't modify
             return cmd_args
-            
+
         # Commands that typically work with namespaced resources
         namespace_aware_commands = [
-            "get", "describe", "delete", "edit", "patch", "logs", "exec", 
+            "get", "describe", "delete", "edit", "patch", "logs", "exec",
             "port-forward", "attach", "cp", "rollout", "scale", "top"
         ]
-        
+
         # Check if this is a namespace-aware command
         if args and args[0] in namespace_aware_commands:
             # Commands where we should inject current namespace
@@ -1105,93 +1129,154 @@ class MainScreen(Screen):
                 args.insert(1, "--namespace")
                 args.insert(2, self.current_namespace)
                 return " ".join(args)
-                
+
         return cmd_args
+
+    def _get_selected_chart_info(self) -> dict | None:
+        """Get information about the currently selected chart"""
+        self.logger.debug(f"MainScreen._get_selected_chart_info: selected_chart={self.selected_chart}, current_namespace={self.current_namespace}")
+        
+        if not self.selected_chart or not self.current_namespace:
+            self.logger.warning(f"MainScreen._get_selected_chart_info: Missing selection - chart: {self.selected_chart}, namespace: {self.current_namespace}")
+            return None
+
+        # Get the chart path
+        namespace_path = self.k8s_manager.get_current_namespace_projects_path(self.current_namespace)
+        if not namespace_path:
+            return None
+
+        # Look for chart in helm-charts directory
+        chart_path = namespace_path / "helm-charts" / self.selected_chart
+        if chart_path.exists() and (chart_path / "Chart.yaml").exists():
+            return {
+                "name": self.selected_chart,
+                "path": chart_path,
+                "namespace": self.current_namespace
+            }
+
+        return None
+
+    def _get_helm_working_directory(self, cmd_args: str) -> str | None:
+        """Get the appropriate working directory for helm commands"""
+        if not cmd_args.strip():
+            return None
+
+        args = cmd_args.split()
+        if not args:
+            return None
+
+        command = args[0].lower()
+
+        # Commands that work with local charts and benefit from chart directory context
+        chart_local_commands = ["show", "template", "lint", "package", "dependency"]
+
+        # For these commands, if there's a "." or local path, use selected chart directory
+        if command in chart_local_commands:
+            chart_info = self._get_selected_chart_info()
+            if chart_info and ("." in args or any(not arg.startswith("-") and "/" not in arg for arg in args[1:])):
+                return str(chart_info["path"])
+
+        # For install/upgrade with local paths
+        elif command in ["install", "upgrade"] and len(args) >= 3:
+            chart_ref = args[2] if command == "install" else args[2]
+            if chart_ref in [".", "./"]:
+                chart_info = self._get_selected_chart_info()
+                if chart_info:
+                    return str(chart_info["path"])
+
+        return None
 
     def _inject_helm_context(self, cmd_args: str) -> str:
         """Inject current cluster/namespace context into helm command"""
         if not cmd_args.strip():
             return cmd_args
-            
+
         args = cmd_args.split()
         if not args:
             return cmd_args
-        
+
         command = args[0].lower()
-        
+
         # Commands that work with charts and need context
-        chart_commands = ["install", "upgrade", "template", "lint", "package", "dependency"]
-        
+        chart_commands = ["install", "upgrade", "template", "lint", "package", "dependency", "show"]
+
         # Commands that work with releases and need namespace
         release_commands = ["list", "status", "history", "rollback", "uninstall", "get", "test"]
-        
+
         modified_args = args.copy()
-        
+
         # Handle chart-based commands
         if command in chart_commands:
             modified_args = self._inject_chart_context(modified_args)
             modified_args = self._inject_helm_namespace(modified_args)
-            
-        # Handle release-based commands  
+
+        # Handle release-based commands
         elif command in release_commands:
             modified_args = self._inject_helm_namespace(modified_args)
-            
+
         return " ".join(modified_args)
-    
+
     def _inject_chart_context(self, args: list[str]) -> list[str]:
         """Resolve chart references to full paths"""
         if len(args) < 2:
             return args
-            
+
         command = args[0].lower()
-        
+
         # For install/upgrade: helm install [release-name] [chart]
         if command in ["install", "upgrade"] and len(args) >= 3:
             chart_ref = args[2]  # Third argument is chart reference
             resolved_chart = self._resolve_chart_path(chart_ref)
             if resolved_chart != chart_ref:
                 args[2] = resolved_chart
-                
-        # For template/lint: helm template [chart]  
+
+        # For template/lint: helm template [chart]
         elif command in ["template", "lint"] and len(args) >= 2:
             chart_ref = args[1]  # Second argument is chart reference
             resolved_chart = self._resolve_chart_path(chart_ref)
             if resolved_chart != chart_ref:
                 args[1] = resolved_chart
-                
+
+        # For show: helm show [subcommand] [chart]
+        elif command == "show" and len(args) >= 3:
+            chart_ref = args[2]  # Third argument is chart reference  
+            resolved_chart = self._resolve_chart_path(chart_ref)
+            if resolved_chart != chart_ref:
+                args[2] = resolved_chart
+
         return args
-    
+
     def _resolve_chart_path(self, chart_ref: str) -> str:
         """Resolve chart reference to full path if it exists in current namespace"""
         # If it's already a path, don't modify
         if "/" in chart_ref or chart_ref.startswith("./") or chart_ref.startswith("../"):
             return chart_ref
-            
+
         # Try to find chart in current namespace
         if not self.k8s_manager.current_projects_path:
             return chart_ref
-            
+
         namespace_path = self.k8s_manager.get_current_namespace_projects_path(self.current_namespace)
         if not namespace_path:
             return chart_ref
-            
+
         # Look for chart in helm-charts directory
         helm_charts_path = namespace_path / "helm-charts"
         if helm_charts_path.exists():
             chart_path = helm_charts_path / chart_ref
             if chart_path.exists() and (chart_path / "Chart.yaml").exists():
                 return str(chart_path)
-                
+
         return chart_ref
-    
+
     def _inject_helm_namespace(self, args: list[str]) -> list[str]:
         """Add namespace to helm command if not specified"""
         # Check if namespace already specified
         has_namespace = any(arg in ["-n", "--namespace"] for arg in args)
-        
+
         if has_namespace or not self.current_namespace:
             return args
-            
+
         # Add namespace flag
         return args + ["--namespace", self.current_namespace]
 
@@ -1216,12 +1301,26 @@ class MainScreen(Screen):
     @on(DataTable.RowSelected, "#charts-table")
     def chart_selected(self, event):
         """Handle chart selection"""
-        charts_table = self.query_one("#charts-table", DataTable)
-        row_data = charts_table.get_row_at(event.row_index)
-        self.selected_chart = str(row_data[0])
+        self.logger.debug(f"MainScreen.chart_selected: Entry - Row index: {event.row_index}")
+        
+        try:
+            charts_table = self.query_one("#charts-table", DataTable)
+            row_data = charts_table.get_row_at(event.row_index)
+            self.selected_chart = str(row_data[0])
 
-        log_panel = self.query_one("#log-panel", LogPanel)
-        log_panel.write_log(f"Selected chart: {self.selected_chart}")
+            self.logger.info(f"MainScreen.chart_selected: Selected chart: {self.selected_chart}")
+
+            log_panel = self.query_one("#log-panel", LogPanel)
+            log_panel.write_log(f"📦 Selected chart: {self.selected_chart}")
+            
+            # Also update status panel to show selected chart
+            self._update_status_panel_with_chart()
+            
+        except Exception as e:
+            self.logger.error(f"MainScreen.chart_selected: Error selecting chart: {e}", extra={
+                "error_type": type(e).__name__,
+                "row_index": event.row_index,
+            })
 
     def _update_command_history_context(self):
         """Update command history context based on current cluster/namespace"""
@@ -1310,7 +1409,8 @@ class MainScreen(Screen):
         if cmd_type == "kubectl":
             success, output = self.k8s_manager.command_executor.execute_kubectl(cmd_args.split())
         else:
-            success, output = self.k8s_manager.command_executor.execute_helm(cmd_args.split())
+            working_dir = self._get_helm_working_directory(cmd_args)
+            success, output = self.k8s_manager.command_executor.execute_helm(cmd_args.split(), cwd=working_dir)
 
         if success:
             # Increment usage count for this command
@@ -1355,7 +1455,8 @@ class MainScreen(Screen):
         if cmd_type == "kubectl":
             success, output = self.k8s_manager.command_executor.execute_kubectl(cmd_args.split())
         else:
-            success, output = self.k8s_manager.command_executor.execute_helm(cmd_args.split())
+            working_dir = self._get_helm_working_directory(cmd_args)
+            success, output = self.k8s_manager.command_executor.execute_helm(cmd_args.split(), cwd=working_dir)
 
         if success:
             # Add to command history

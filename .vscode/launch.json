@@ -5,22 +5,22 @@
             "name": "Debug Clusterm App",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/main.py",
+            "module": "clusterm",
             "console": "integratedTerminal",
             "justMyCode": false,
             "env": {
-                "PYTHONPATH": "${workspaceFolder}"
+                "PYTHONPATH": "${workspaceFolder}/src"
             }
         },
         {
             "name": "Debug Command Pad Component",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/main.py",
+            "module": "clusterm",
             "console": "integratedTerminal",
             "justMyCode": false,
             "env": {
-                "PYTHONPATH": "${workspaceFolder}"
+                "PYTHONPATH": "${workspaceFolder}/src"
             },
             "args": []
         }

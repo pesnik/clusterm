@@ -40,10 +40,10 @@ class ContextSelector(Vertical):
         """Called when the context selector is mounted to the DOM"""
         if self.logger:
             self.logger.debug("ContextSelector.on_mount: Entry - Populating selectors after mount")
-        
+
         # Populate selectors with actual data now that everything is set up
         self.call_after_refresh(self.refresh_selectors)
-        
+
         if self.logger:
             self.logger.debug("ContextSelector.on_mount: Scheduled selector refresh")
 
