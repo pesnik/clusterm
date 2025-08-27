@@ -97,7 +97,8 @@ fi
 '''
     wrapper_path = Path("dist/clusterm-portable")
     wrapper_path.write_text(wrapper_content)
-    wrapper_path.chmod(0o755)
+    # Use subprocess to set permissions on Oracle Linux
+    subprocess.run(["chmod", "+x", str(wrapper_path)], check=True)
     return wrapper_path
 
 def show_results():
