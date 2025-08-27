@@ -1041,6 +1041,8 @@ class MainScreen(Screen):
         # Inject current namespace context if not already specified
         if cmd_type == "kubectl":
             cmd_args = self._inject_namespace_context(cmd_args)
+        elif cmd_type == "helm":
+            cmd_args = self._inject_helm_context(cmd_args)
         
         # Build the full command for history
         full_command = f"{cmd_type} {cmd_args}"
@@ -1096,6 +1098,93 @@ class MainScreen(Screen):
                 return " ".join(args)
                 
         return cmd_args
+
+    def _inject_helm_context(self, cmd_args: str) -> str:
+        """Inject current cluster/namespace context into helm command"""
+        if not cmd_args.strip():
+            return cmd_args
+            
+        args = cmd_args.split()
+        if not args:
+            return cmd_args
+        
+        command = args[0].lower()
+        
+        # Commands that work with charts and need context
+        chart_commands = ["install", "upgrade", "template", "lint", "package", "dependency"]
+        
+        # Commands that work with releases and need namespace
+        release_commands = ["list", "status", "history", "rollback", "uninstall", "get", "test"]
+        
+        modified_args = args.copy()
+        
+        # Handle chart-based commands
+        if command in chart_commands:
+            modified_args = self._inject_chart_context(modified_args)
+            modified_args = self._inject_helm_namespace(modified_args)
+            
+        # Handle release-based commands  
+        elif command in release_commands:
+            modified_args = self._inject_helm_namespace(modified_args)
+            
+        return " ".join(modified_args)
+    
+    def _inject_chart_context(self, args: list[str]) -> list[str]:
+        """Resolve chart references to full paths"""
+        if len(args) < 2:
+            return args
+            
+        command = args[0].lower()
+        
+        # For install/upgrade: helm install [release-name] [chart]
+        if command in ["install", "upgrade"] and len(args) >= 3:
+            chart_ref = args[2]  # Third argument is chart reference
+            resolved_chart = self._resolve_chart_path(chart_ref)
+            if resolved_chart != chart_ref:
+                args[2] = resolved_chart
+                
+        # For template/lint: helm template [chart]  
+        elif command in ["template", "lint"] and len(args) >= 2:
+            chart_ref = args[1]  # Second argument is chart reference
+            resolved_chart = self._resolve_chart_path(chart_ref)
+            if resolved_chart != chart_ref:
+                args[1] = resolved_chart
+                
+        return args
+    
+    def _resolve_chart_path(self, chart_ref: str) -> str:
+        """Resolve chart reference to full path if it exists in current namespace"""
+        # If it's already a path, don't modify
+        if "/" in chart_ref or chart_ref.startswith("./") or chart_ref.startswith("../"):
+            return chart_ref
+            
+        # Try to find chart in current namespace
+        if not self.k8s_manager.current_projects_path:
+            return chart_ref
+            
+        namespace_path = self.k8s_manager.get_current_namespace_projects_path(self.current_namespace)
+        if not namespace_path:
+            return chart_ref
+            
+        # Look for chart in helm-charts directory
+        helm_charts_path = namespace_path / "helm-charts"
+        if helm_charts_path.exists():
+            chart_path = helm_charts_path / chart_ref
+            if chart_path.exists() and (chart_path / "Chart.yaml").exists():
+                return str(chart_path)
+                
+        return chart_ref
+    
+    def _inject_helm_namespace(self, args: list[str]) -> list[str]:
+        """Add namespace to helm command if not specified"""
+        # Check if namespace already specified
+        has_namespace = any(arg in ["-n", "--namespace"] for arg in args)
+        
+        if has_namespace or not self.current_namespace:
+            return args
+            
+        # Add namespace flag
+        return args + ["--namespace", self.current_namespace]
 
     def _handle_deploy_result(self, result):
         """Handle deployment configuration result"""
@@ -1201,6 +1290,8 @@ class MainScreen(Screen):
         # Inject current namespace context if not already specified
         if cmd_type == "kubectl":
             cmd_args = self._inject_namespace_context(cmd_args)
+        elif cmd_type == "helm":
+            cmd_args = self._inject_helm_context(cmd_args)
 
         log_panel = self.query_one("#log-panel", LogPanel)
         full_command = f"{cmd_type} {cmd_args}"
@@ -1245,6 +1336,8 @@ class MainScreen(Screen):
         # Inject current namespace context if not already specified
         if cmd_type == "kubectl":
             cmd_args = self._inject_namespace_context(cmd_args)
+        elif cmd_type == "helm":
+            cmd_args = self._inject_helm_context(cmd_args)
 
         # Update full_command with potentially modified cmd_args
         full_command = f"{cmd_type} {cmd_args}"
