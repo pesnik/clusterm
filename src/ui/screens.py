@@ -1038,6 +1038,10 @@ class MainScreen(Screen):
         # Update command history context
         self._update_command_history_context()
 
+        # Inject current namespace context if not already specified
+        if cmd_type == "kubectl":
+            cmd_args = self._inject_namespace_context(cmd_args)
+        
         # Build the full command for history
         full_command = f"{cmd_type} {cmd_args}"
         log_panel.write_log(f"Executing {full_command}")
@@ -1060,6 +1064,38 @@ class MainScreen(Screen):
             log_panel.write_log(f"Command failed: {output}", "ERROR")
 
         self._refresh_all_data()
+
+    def _inject_namespace_context(self, cmd_args: str) -> str:
+        """Inject current namespace context into kubectl command if not already specified"""
+        if not cmd_args.strip():
+            return cmd_args
+            
+        # Convert to list for easier manipulation
+        args = cmd_args.split()
+        
+        # Check if namespace is already specified
+        has_namespace = any(arg in ["-n", "--namespace", "--all-namespaces", "-A"] for arg in args)
+        
+        if has_namespace:
+            # Namespace already specified, don't modify
+            return cmd_args
+            
+        # Commands that typically work with namespaced resources
+        namespace_aware_commands = [
+            "get", "describe", "delete", "edit", "patch", "logs", "exec", 
+            "port-forward", "attach", "cp", "rollout", "scale", "top"
+        ]
+        
+        # Check if this is a namespace-aware command
+        if args and args[0] in namespace_aware_commands:
+            # Commands where we should inject current namespace
+            if self.current_namespace:
+                # Insert namespace after the command (even for default to be explicit)
+                args.insert(1, "--namespace")
+                args.insert(2, self.current_namespace)
+                return " ".join(args)
+                
+        return cmd_args
 
     def _handle_deploy_result(self, result):
         """Handle deployment configuration result"""
@@ -1162,6 +1198,10 @@ class MainScreen(Screen):
         if cmd_args.lower().startswith(cmd_type.lower()):
             cmd_args = cmd_args[len(cmd_type):].strip()
 
+        # Inject current namespace context if not already specified
+        if cmd_type == "kubectl":
+            cmd_args = self._inject_namespace_context(cmd_args)
+
         log_panel = self.query_one("#log-panel", LogPanel)
         full_command = f"{cmd_type} {cmd_args}"
         log_panel.write_log(f"📋 Selected from pad: {full_command}")
@@ -1202,6 +1242,12 @@ class MainScreen(Screen):
         else:
             cmd_args = full_command
 
+        # Inject current namespace context if not already specified
+        if cmd_type == "kubectl":
+            cmd_args = self._inject_namespace_context(cmd_args)
+
+        # Update full_command with potentially modified cmd_args
+        full_command = f"{cmd_type} {cmd_args}"
         log_panel.write_log(f"🧠 Intelligent execution: {full_command}")
 
         if cmd_type == "kubectl":
