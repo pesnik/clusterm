@@ -23,31 +23,54 @@ A robust, modular, and extensible Terminal User Interface (TUI) application for 
 
 ## Installation
 
-### Prerequisites
+### Option 1: Binary Installation (Recommended)
+
+Download and install the standalone Linux binary:
+
+```bash
+# Download the binary (replace with actual release URL)
+curl -L -o clusterm https://github.com/yourusername/clusterm/releases/latest/download/clusterm
+
+# Make executable
+chmod +x clusterm
+
+# Install system-wide
+sudo mv clusterm /usr/local/bin/
+
+# Or install locally
+mkdir -p ~/.local/bin
+mv clusterm ~/.local/bin/
+# Ensure ~/.local/bin is in your PATH
+```
+
+**Binary Requirements:**
+- Linux x86_64
+- GLIBC 2.31+ (Ubuntu 20.04+, CentOS 8+)
+- kubectl binary (for Kubernetes operations)
+- helm binary (for Helm operations)
+
+### Option 2: Source Installation
+
+**Prerequisites:**
 - Python 3.11 or higher
-- kubectl binary
-- helm binary (optional, for Helm functionality)
+- uv package manager
 
-### Dependencies
-- **textual**: Modern TUI framework
-- **prompt-toolkit**: Advanced command-line interface
-- **pyyaml**: YAML configuration support
-
-### Install Dependencies
-
-Using uv (recommended):
+**Install from source:**
 ```bash
+# Clone repository
+git clone https://github.com/yourusername/clusterm
+cd clusterm
+
+# Install dependencies
 uv sync
+
+# Run from source
+uv run clusterm
 ```
 
-Using pip:
+**For development:**
 ```bash
-pip install -r requirements.txt
-```
-
-For development:
-```bash
-pip install -e .[dev]
+uv sync --group dev
 ```
 
 ### Quick Demo
@@ -55,11 +78,15 @@ pip install -e .[dev]
 Try the intelligent command input features:
 
 ```bash
-# Run the interactive demo
-python examples/intelligent_input_demo.py
+# Run the interactive demo (source installation)
+uv run python examples/command_input_demo.py
 
-# Or launch Clusterm and press Ctrl+I for Smart Input
-python main.py
+# Launch Clusterm TUI
+clusterm  # (if binary installed)
+# OR
+uv run clusterm  # (if source installation)
+
+# Press Ctrl+I for Smart Input tab
 ```
 
 ## First-Time Setup
