@@ -86,14 +86,26 @@ def create_portable_wrapper():
     wrapper_content = '''#!/bin/bash
 # Portable wrapper for clusterm PyInstaller distribution
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CLUSTERM_DIR="$SCRIPT_DIR/clusterm"
 
-if [ -d "$CLUSTERM_DIR" ]; then
-    exec "$CLUSTERM_DIR/clusterm" "$@"
-else
-    echo "Error: clusterm distribution not found at $CLUSTERM_DIR"
-    exit 1
-fi
+# Try multiple possible locations for the clusterm distribution
+POSSIBLE_DIRS=(
+    "$SCRIPT_DIR/clusterm"
+    "$SCRIPT_DIR/../share/clusterm"
+    "$HOME/.local/share/clusterm" 
+    "/usr/local/share/clusterm"
+)
+
+for CLUSTERM_DIR in "${POSSIBLE_DIRS[@]}"; do
+    if [ -d "$CLUSTERM_DIR" ] && [ -x "$CLUSTERM_DIR/clusterm" ]; then
+        exec "$CLUSTERM_DIR/clusterm" "$@"
+    fi
+done
+
+echo "Error: clusterm distribution not found in any of these locations:"
+for dir in "${POSSIBLE_DIRS[@]}"; do
+    echo "  $dir"
+done
+exit 1
 '''
     wrapper_path = Path("dist/clusterm-portable")
     wrapper_path.write_text(wrapper_content)
