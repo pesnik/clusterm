@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
 Clusterm - Kubernetes Deployment Manager TUI
-A modular, extensible interface for managing Kubernetes deployments
+Main entry point for the clusterm package
 """
 
 import sys
 from pathlib import Path
 
-from src.ui.app import ClustermApp
+from .ui.app import ClustermApp
 
 
 def main():
