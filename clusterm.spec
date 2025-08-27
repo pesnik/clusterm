@@ -7,10 +7,14 @@ from pathlib import Path
 src_dir = Path('src')
 clusterm_dir = src_dir / 'clusterm'
 
+# Find libz.so.1 in common locations
+libz_paths = ['/lib64/libz.so.1', '/usr/lib64/libz.so.1', '/lib/x86_64-linux-gnu/libz.so.1']
+libz_binaries = [(path, '.') for path in libz_paths if os.path.exists(path)]
+
 a = Analysis(
     ['main_entry.py'],
     pathex=['src'],
-    binaries=[],
+    binaries=libz_binaries,
     datas=[
         # Include CSS files for textual UI styling
         (str(clusterm_dir / 'ui' / 'styles'), 'clusterm/ui/styles'),
