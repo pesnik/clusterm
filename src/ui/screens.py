@@ -247,6 +247,40 @@ class MainScreen(Screen):
                 "error_details": str(e),
             })
 
+    def _update_charts_table(self):
+        """Update the charts table with current namespace data"""
+        self.logger.debug(f"MainScreen._update_charts_table: Entry - Updating for namespace: {self.current_namespace}")
+
+        try:
+            charts_table = self.query_one("#charts-table", DataTable)
+            self.logger.debug("MainScreen._update_charts_table: Clearing existing chart data")
+            charts_table.clear()
+
+            charts = self.k8s_manager.get_available_charts(self.current_namespace)
+            self.logger.debug(f"MainScreen._update_charts_table: Retrieved {len(charts)} charts for namespace {self.current_namespace}")
+
+            for i, chart in enumerate(charts):
+                self.logger.debug(f"MainScreen._update_charts_table: Processing chart {i+1}/{len(charts)}: {chart.get('name', 'unknown')}")
+                description = chart["description"]
+                if len(description) > 40:
+                    description = description[:37] + "..."
+
+                charts_table.add_row(
+                    chart["name"],
+                    chart["version"],
+                    description,
+                )
+                self.logger.debug(f"MainScreen._update_charts_table: Added chart row: {chart['name']} v{chart['version']}")
+
+            self.logger.info(f"MainScreen._update_charts_table: Successfully updated charts table with {len(charts)} entries for namespace {self.current_namespace}")
+
+        except Exception as e:
+            self.logger.error(f"MainScreen._update_charts_table: Error updating charts table: {e}", extra={
+                "error_type": type(e).__name__,
+                "error_details": str(e),
+                "current_namespace": self.current_namespace,
+            })
+
     def _setup_all_tables(self):
         """Setup all data tables"""
         self.logger.debug("MainScreen._setup_all_tables: Entry - Setting up all data tables")
@@ -302,6 +336,10 @@ class MainScreen(Screen):
             self.logger.debug(f"MainScreen._refresh_all_data: Refreshing data for namespace: {self.current_namespace}")
 
             log_panel.write_log(f"🔄 Refreshing data for namespace: {self.current_namespace}")
+
+            # Refresh charts table for current namespace
+            self.logger.debug("MainScreen._refresh_all_data: Updating charts table")
+            self._update_charts_table()
 
             # Refresh deployments for current namespace
             self.logger.debug("MainScreen._refresh_all_data: Getting deployments")
@@ -706,6 +744,10 @@ class MainScreen(Screen):
         try:
             log_panel = self.query_one("#log-panel", LogPanel)
 
+            # Update charts table for current namespace
+            self.logger.debug("MainScreen._refresh_namespace_specific_data: Updating charts table")
+            self._update_charts_table()
+
             # Update pods
             pods = self.k8s_manager.get_pods(self.current_namespace)
             self._update_pods_table(pods)
@@ -718,7 +760,9 @@ class MainScreen(Screen):
             deployments = self.k8s_manager.get_deployments(self.current_namespace)
             self._update_deployments_table(deployments)
 
-            log_panel.write_log(f"📊 Found {len(pods)} pods, {len(services)} services, {len(deployments)} deployments")
+            # Get charts count for logging
+            charts = self.k8s_manager.get_available_charts(self.current_namespace)
+            log_panel.write_log(f"📊 Found {len(charts)} charts, {len(pods)} pods, {len(services)} services, {len(deployments)} deployments")
 
         except Exception as e:
             try:
